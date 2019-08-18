@@ -692,11 +692,9 @@ class EntityLink(nn.Module):
             nn.Linear(in_features=encoder_size*4, out_features=num_outputs)
         )
 
-    def forward(self,token_tensor,mask_X,pos,length):
+    def forward(self, token_tensor, mask_X,pos,length):
         X = self.word_embedding(token_tensor)
-
         X1 = self.LSTM(X, length)
-
         spans_contexts = self.span_extractor(
             X1,
             pos
@@ -708,7 +706,7 @@ class EntityLink(nn.Module):
         return pred
 
 
-class EntityLink_entity_vector(nn.Module):
+class NerLinkModel(nn.Module):
     def __init__(self,
                  vocab_size,
                  init_embedding,
@@ -719,8 +717,8 @@ class EntityLink_entity_vector(nn.Module):
                  seq_dropout=0.1,
                  num_outputs=5,
                  use_bert=False
-              ):
-        super(EntityLink_entity_vector, self).__init__()
+                ):
+        super(NerLinkModel, self).__init__()
         # self.word_embedding = nn.Embedding(vocab_size,
         #                                    word_embed_size,
         #                                    padding_idx=0)
@@ -736,8 +734,6 @@ class EntityLink_entity_vector(nn.Module):
             if init_embedding is not None:
                 self.word_embedding.weight.data.copy_(torch.from_numpy(init_embedding))
             self.seq_dropout = seq_dropout
-        #self.lstm_attention = Attention(encoder_size*2)
-
             self.dropout1d = nn.Dropout2d(self.seq_dropout)
             self.LSTM = LSTMEncoder(embed_size=word_embed_size,
                                     encoder_size=encoder_size,
@@ -748,7 +744,6 @@ class EntityLink_entity_vector(nn.Module):
                 nn.Linear(in_features=encoder_size * 4, out_features=num_outputs)
             )
             span_size = 2 * encoder_size
-
         else:
             bert_model = 'bert-base-chinese'
             self.bert = BertModel.from_pretrained(bert_model)
@@ -756,47 +751,117 @@ class EntityLink_entity_vector(nn.Module):
         self.span_extractor = EndpointSpanExtractor(span_size)
 
         self.use_layer = -1
-        self.use_layer = -1
         hidden_size = 100
         self.hidden = nn.Linear(1536, hidden_size)
+        self.classify1 = nn.Sequential(
+            #nn.BatchNorm1d(3840),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=3840, out_features=16),
+            nn.ReLU()
+        )
+        self.classify2 = nn.Sequential(
+            # nn.BatchNorm1d(3840),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=3840+6+1, out_features=1),
+            nn.Sigmoid()
+        )
 
-    def forward(self,token_tensor,mask_X,pos,vector,length):
+    def forward(self, token_tensor, pos1, pos2, length, numerical_f):
         if self.use_bert:
             # self.bert.eval()
             # with torch.no_grad():
-            bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(),
+            bert_outputs, cls = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(),
                                             token_type_ids=None,
                                             output_all_encoded_layers=True)
 
             bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
-            #X1 = self.LSTM(bert_outputs, length)
-
-            spans_contexts = self.span_extractor(
-                bert_outputs,
-                pos
-            )
+            spans_contexts1 = self.span_extractor(bert_outputs, pos1)
+            spans_contexts2 = self.span_extractor(bert_outputs, pos2)
+            last_vector = torch.cat([cls, spans_contexts1, spans_contexts2, numerical_f], dim=-1)
         else:
             X1 = self.word_embedding(token_tensor)
             X1 = self.LSTM(X1, length)
-
-            spans_contexts = self.span_extractor(
-                X1,
-                pos
-            )
+            spans_contexts = self.span_extractor(X1, pos1)
         #self.hidden(spans_contexts)
-        pred = self.hidden(spans_contexts)
-        #pred = torch.sum(pred*vector, dim=0)
-        #pred = F.cosine_similarity(pred, vector)
-        # X2 = torch.cat([X1, spans_contexts], dim=-1)
-        # X2 = X2.permute(1,0,2)
-        # pred = self.hidden2tag(X2)
-        # pred = pred.permute(1,0,2)
-        #grades = torch.sum(pred*vector)
+        pred = self.classify2(last_vector)
+        return pred
 
-        #X2 = self.lstm_attention(X1)
-        #X3 = torch.cat([spans_contexts.squeeze(0),X2],dim=-1)
-        #pred = self.classify(spans_contexts.squeeze(0))
-        #print(pred.size())
+
+class NerLinkCateModel(nn.Module):
+    def __init__(self,
+                 vocab_size,
+                 init_embedding,
+                 word_embed_size=300,
+                 encoder_size=64,
+                 dim_num_feat=0,
+                 dropout=0.2,
+                 seq_dropout=0.1,
+                 num_outputs=5,
+                 use_bert=False
+                ):
+        super(NerLinkCateModel, self).__init__()
+        self.use_bert=use_bert
+        if not use_bert:
+            self.word_embedding = nn.Embedding(vocab_size,
+                                               word_embed_size,
+                                               padding_idx=0)
+            self.seq_dropout = seq_dropout
+            self.embed_size = word_embed_size
+            self.encoder_size = encoder_size
+            if init_embedding is not None:
+                self.word_embedding.weight.data.copy_(torch.from_numpy(init_embedding))
+            self.seq_dropout = seq_dropout
+            self.dropout1d = nn.Dropout2d(self.seq_dropout)
+            self.LSTM = LSTMEncoder(embed_size=word_embed_size,
+                                    encoder_size=encoder_size,
+                                    bidirectional=True)
+            self.classify = nn.Sequential(
+                nn.BatchNorm1d(encoder_size * 4),
+                nn.Dropout(p=dropout),
+                nn.Linear(in_features=encoder_size * 4, out_features=num_outputs)
+            )
+            span_size = 2 * encoder_size
+        else:
+            bert_model = 'bert-base-chinese'
+            self.bert = BertModel.from_pretrained(bert_model)
+            span_size = 768
+        self.span_extractor = EndpointSpanExtractor(span_size)
+
+        self.use_layer = -1
+        hidden_size = 100
+        self.hidden = nn.Linear(1536, hidden_size)
+        self.classify1 = nn.Sequential(
+            #nn.BatchNorm1d(3840),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=3840, out_features=16),
+            nn.ReLU()
+        )
+        self.classify2 = nn.Sequential(
+            # nn.BatchNorm1d(3840),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=768*2, out_features=num_outputs),
+        )
+        self.attn_pool = Attention(768)
+
+    def forward(self, token_tensor, pos1, pos2, length, mask):
+        if self.use_bert:
+            # self.bert.eval()
+            # with torch.no_grad():
+            bert_outputs, cls = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(),
+                                            token_type_ids=None,
+                                            output_all_encoded_layers=True)
+
+            bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
+            span_pool = self.attn_pool(bert_outputs, mask=mask)
+            #spans_contexts1 = self.span_extractor(bert_outputs, pos1)
+            #spans_contexts2 = self.span_extractor(bert_outputs, pos2)
+            last_vector = torch.cat([cls, span_pool], dim=-1)
+        else:
+            X1 = self.word_embedding(token_tensor)
+            X1 = self.LSTM(X1, length)
+            spans_contexts = self.span_extractor(X1, pos1)
+        #self.hidden(spans_contexts)
+        pred = self.classify2(last_vector)
         return pred
 
 

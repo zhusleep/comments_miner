@@ -4,6 +4,7 @@ import json
 from sklearn.metrics import classification_report
 
 
+
 def calc_f1(pred,label,ner_list):
     ## ['O', 'B', 'I', 'E', 'S']
     B_token = [ner_list.index('B-A'),ner_list.index('B-O')]
@@ -20,7 +21,15 @@ def calc_f1(pred,label,ner_list):
         start = None
         for index, word in enumerate(sentence):
             if word in B_token:
-                start = index
+                if start is not None:
+                    end = index
+                    if sentence[start] == B_token[0]:
+                        span.append((start, end - 1, 'A'))
+                    else:
+                        span.append((start, end - 1, 'O'))
+                    start = index
+                else:
+                    start = index
             elif (word==O_token or word in B_token) and start is not None:
                 end = index
                 # if ''.join(label_sentence[start:end + 1]) in kb_set:
@@ -76,7 +85,7 @@ def cal_ner_result(pred,dev,ner_list):
 
     def parse(sentence):
         """
-        find B*E or S
+        find BIO
         :param sentence:
         :return:
         """
@@ -84,14 +93,18 @@ def cal_ner_result(pred,dev,ner_list):
         start = None
         for index, word in enumerate(sentence):
             if word in B_token:
-                start = index
-            elif (word == O_token or word in B_token) and start is not None:
+                if start is not None:
+                    end = index
+                    if sentence[start] == B_token[0]:
+                        span.append((start, end - 1, 'A'))
+
+                    else:
+                        span.append((start, end - 1, 'O'))
+                    start = index
+                else:
+                    start = index
+            elif word == O_token and start is not None:
                 end = index
-                # if ''.join(label_sentence[start:end + 1]) in kb_set:
-                #     span.append((start, end+1))
-                #     start = None
-                # else:
-                #     start = None
                 if sentence[start] == B_token[0]:
                     span.append((start, end - 1, 'A'))
                 else:
@@ -138,7 +151,29 @@ def split_list(item, n):
         return new_item
 
 
-def get_threshold(predict, label, num_feature):
+def cal_threshold(predict):
+    pred_set = np.concatenate(predict, axis=0)
+    thre_list = []
+    for i in range(1):
+        preds = sorted(list(pred_set.flatten()), reverse=True)
+        n = sum(preds)
+        m = 0
+        e = 0
+        f1 = 0
+        cut_thre = 0
+        for threshold in preds:
+            e += threshold  # 正例期望个数
+            m += 1  # 正例提交个数
+            f1_temp = e / (m + n)
+            if f1 < f1_temp:
+                f1 = f1_temp
+                cut_thre = threshold
+        thre_list.append(cut_thre)
+    print('阈值', thre_list)
+    return thre_list[0]
+
+
+def get_threshold(predict, label, num_feature=1):
     thre_list = []
     for i in range(num_feature):
         preds = sorted(list(predict[:, i].flatten()), reverse=True)

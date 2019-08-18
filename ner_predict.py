@@ -3,7 +3,7 @@ import numpy as np
 
 import torch, os
 from data_prepare import data_manager
-from spo_dataset import SPO_BERT, get_mask, collate_fn_withchar, collate_fn
+from spo_dataset import SPO_BERT, get_mask, collate_fn
 from spo_model import SPOModel, SPO_Model_Bert
 from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm as tqdm
@@ -32,7 +32,7 @@ dev_X = pd.read_csv('test/Test_reviews.csv')['Reviews']
 train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
 dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
 train_ner = [[0]+list(temp)+[0]for temp in labels]
-
+result = cal_ner_result(train_ner, train_X, data_manager.ner_list)
 
 BERT_MODEL = 'bert-base-chinese'
 CASED = False
@@ -47,21 +47,7 @@ t = BertTokenizer.from_pretrained(
 train_dataset = SPO_BERT(train_X, t,  ner=train_ner)
 valid_dataset = SPO_BERT(dev_X, t, ner=None)
 
-batch_size = 20
-
-
-# # 准备embedding数据
-# #embedding_file = 'embedding/miniembedding_baike.npy'
-# embedding_file = 'embedding/miniembedding_engineer_qq_att.npy'
-#
-# if os.path.exists(embedding_file):
-#     embedding_matrix = np.load(embedding_file)
-# else:
-#     #embedding = '/home/zhukaihua/Desktop/nlp/embedding/baike'
-#     #embedding = '/home/zhu/Desktop/word_embedding/sgns.baidubaike.bigram-char'
-#     embedding = '/home/zhukaihua/Desktop/nlp/embedding/Tencent_AILab_ChineseEmbedding.txt'
-#     embedding_matrix = load_glove(embedding, t.num_words+100, t)
-#     np.save(embedding_file, embedding_matrix)
+batch_size = 3
 
 model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags=len(data_manager.ner_list))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -77,7 +63,7 @@ optimizer_grouped_parameters = [
     {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
 
-epoch = 20
+epoch = 3
 t_total = int(epoch*len(train_X)/batch_size)
 optimizer = BertAdam([
                 {'params': model.LSTM.parameters()},
@@ -120,8 +106,6 @@ for epoch in range(epoch):
 
 torch.save(model.state_dict(), 'model_ner/ner_bert_predict.pth')
 #
-
-
 model.eval()
 pred_set = []
 for index, X, length in tqdm(valid_dataloader):
@@ -154,6 +138,7 @@ for index, row in dev.iterrows():
     pred_mention.append(temp_mention)
 
 dev['pred'] = pred_mention
+dev['pos'] = result
 dev.to_pickle('result/ner_bert_result.pkl')
 
 
