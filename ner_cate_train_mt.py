@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import torch, os
 from data_prepare import data_manager
-from spo_dataset import NERCate, get_mask_attn_pool, collate_fn_ner_cate
-from spo_model import SPOModel, NerLinkCateModel
+from spo_dataset import NERCateMT, get_mask_attn_pool, collate_fn_ner_cate_mt
+from spo_model import SPOModel, NerLinkCateModelMT
 from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm as tqdm
 import torch.nn as nn
@@ -24,13 +24,10 @@ seed_torch(2019)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
 round = 0
-name = 'cate'
-if name =='polarity':
-    id_label=4
-    cate_list = data_manager.polarity
-else:
-    id_label=3
-    cate_list = data_manager.category
+name = 'polarity'
+
+polar_list = data_manager.polarity
+cate_list = data_manager.category
 
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     # if round<2:
@@ -47,22 +44,23 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         #    cache_dir="~/.pytorch_pretrained_bert/bert-large-uncased-vocab.txt"
     )
 
-    train_dataset = NERCate([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in train_X], t,
+    train_dataset = NERCateMT([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in train_X], t,
                                 pos1=[x[1] for x in train_X], pos2=[x[2] for x in train_X],
-                                label=[x[id_label] for x in train_X], use_bert=True)
-    valid_dataset = NERCate([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in dev_X], t,
+                                polar_label=[x[4] for x in train_X], cate_label=[x[3] for x in train_X], use_bert=True)
+    valid_dataset = NERCateMT([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in dev_X], t,
                                 pos1=[x[1] for x in dev_X], pos2=[x[2] for x in dev_X],
-                                label=[x[id_label] for x in dev_X], use_bert=True)
+                                polar_label=[x[4] for x in dev_X], cate_label=[x[3] for x in dev_X], use_bert=True)
     train_batch_size = 10
     valid_batch_size = 10
-    model = NerLinkCateModel(vocab_size=None, init_embedding=None, encoder_size=128, dropout=0.2, num_outputs=len(cate_list), use_bert=True)
+    model = NerLinkCateModelMT(vocab_size=None, init_embedding=None, encoder_size=128, dropout=0.2, num_outputs1=len(cate_list),
+                             num_outputs2=len(polar_list), use_bert=True)
     use_cuda=True
     if use_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     else:
         device = torch.device("cpu")
     model.to(device)
-    valid_dataloader = DataLoader(valid_dataset, collate_fn=collate_fn_ner_cate, shuffle=False, batch_size=valid_batch_size)
+    valid_dataloader = DataLoader(valid_dataset, collate_fn=collate_fn_ner_cate_mt, shuffle=False, batch_size=valid_batch_size)
 
     epochs = 3
     t_total = int(epochs*len(train_X)/train_batch_size)
@@ -75,8 +73,8 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         model.train()
         train_loss = 0
         torch.cuda.manual_seed_all(epoch)
-        train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn_ner_cate, shuffle=True, batch_size=train_batch_size)
-        for index, X, label, pos1, pos2, length, numerical_f in tqdm(train_dataloader):
+        train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn_ner_cate_mt, shuffle=True, batch_size=train_batch_size)
+        for index, X, cate_label,polar_label, pos1, pos2, length, numerical_f in tqdm(train_dataloader):
             #model.zero_grad()
             X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
             X = X.to(device)
@@ -84,12 +82,16 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             mask_X = get_mask_attn_pool(X, length, pos1, pos2, is_cuda=use_cuda).to(device).type(torch.float)
             pos1 = pos1.type(torch.LongTensor).to(device)
             pos2 = pos2.type(torch.LongTensor).to(device)
-            label = label.to(device).type(torch.long)
+            cate_label = cate_label.to(device).type(torch.long)
+            polar_label = polar_label.to(device).type(torch.long)
             numerical_f = numerical_f.to(device)
-            pred = model(X, pos1, pos2, length, mask_X, numerical_f)
-            loss = loss_fn(pred, label)
+            pred1, pred2 = model(X, pos1, pos2, length, mask_X, numerical_f)
+            loss1 = loss_fn(pred1, cate_label)
+            loss2 = loss_fn(pred2, polar_label)
+            r = 0.7
+            loss = r*loss1+(1-r)*loss2
             loss.backward()
-            del X, length, pred, pos1, pos2, label, mask_X
+            del X, length, pred1, pos1, pos2, mask_X
             gc.collect()
             #loss = loss_fn(pred, ner)
             optimizer.step()
@@ -102,9 +104,11 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         gc.collect()
         model.eval()
         valid_loss = 0
-        pred_set = []
-        label_set = []
-        for index, X, label, pos1, pos2, length , numerical_f in valid_dataloader:
+        cate_pred_set = []
+        cate_label_set = []
+        polar_pred_set = []
+        polar_label_set = []
+        for index, X, cate_label,polar_label, pos1, pos2, length , numerical_f in valid_dataloader:
             X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
             X = X.to(device)
             length = length.to(device)
@@ -112,28 +116,37 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             mask_X = get_mask_attn_pool(X, length, pos1, pos2, is_cuda=use_cuda).to(device).type(torch.float)
             pos1 = pos1.type(torch.LongTensor).to(device)
             pos2 = pos2.type(torch.LongTensor).to(device)
-            label = label.to(device).type(torch.long)
+            cate_label = cate_label.to(device).type(torch.long)
+            polar_label = polar_label.to(device).type(torch.long)
             numerical_f = numerical_f.to(device)
 
             with torch.no_grad():
-                pred = model(X, pos1, pos2, length, mask_X, numerical_f)
-            loss = loss_fn(pred, label)
-            pred_set.append(pred.cpu().numpy())
-            label_set.append(label.cpu().numpy())
+                pred1, pred2 = model(X, pos1, pos2, length, mask_X, numerical_f)
+            loss1 = loss_fn(pred1, cate_label)
+            loss2 = loss_fn(pred2, polar_label)
+            loss = r*loss1 + (1-r)*loss2
+            cate_pred_set.append(pred1.cpu().numpy())
+            cate_label_set.append(cate_label.cpu().numpy())
+            polar_pred_set.append(pred2.cpu().numpy())
+            polar_label_set.append(polar_label.cpu().numpy())
             valid_loss += loss.item()
 
         valid_loss = valid_loss / len(dev_X)
-        pred_set = np.concatenate(pred_set, axis=0)
-        label_set = np.concatenate(label_set, axis=0)
-        top_class = np.argmax(pred_set, axis=1)
-        equals = top_class == label_set
-        accuracy = np.mean(equals)
-        print('acc', accuracy)
+        cate_pred_set = np.concatenate(cate_pred_set, axis=0)
+        cate_label_set = np.concatenate(cate_label_set, axis=0)
+        top_class = np.argmax(cate_pred_set, axis=1)
+        cate_equals = top_class == cate_label_set
+
+        polar_pred_set = np.concatenate(polar_pred_set, axis=0)
+        polar_label_set = np.concatenate(polar_label_set, axis=0)
+        top_class = np.argmax(polar_pred_set, axis=1)
+        polar_equals = top_class == polar_label_set
+        print('cate %f, polar %f, overall %f'%(np.mean(cate_equals),np.mean(polar_equals),np.mean(cate_equals==polar_equals)))
         print('train loss　%f, val loss %f ' % (train_loss, valid_loss))
         #INFO_THRE, thre_list = get_threshold(pred_set, label_set)
         #print(INFO_THRE)
     torch.save(model.state_dict(), 'model_ner/ner_link_round_%s.pth' % round)
-    pred_vector.append(pred_set)
+    #pred_vector.append(pred_set)
     round += 1
     # INFO = 'train loss %f, valid loss %f, acc %f, recall %f, f1 %f ' % (train_loss, valid_loss, INFO_THRE[0], INFO_THRE[1], INFO_THRE[2])
     # logging.info(INFO)

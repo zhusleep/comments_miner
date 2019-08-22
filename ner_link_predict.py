@@ -57,8 +57,8 @@ train_dataset = NERLINK([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in train_X], t
 valid_dataset = NERLINK([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in dev_X], t,
                             pos1=[x[1] for x in dev_X], pos2=[x[2] for x in dev_X],
                             label=None, use_bert=True, gap=[x[4] for x in dev_X])
-train_batch_size = 3
-valid_batch_size = 3
+train_batch_size = 10
+valid_batch_size = 10
 model = NerLinkModel(vocab_size=None, init_embedding=None, encoder_size=128, dropout=0.2, use_bert=True)
 use_cuda=True
 if use_cuda:
@@ -68,7 +68,7 @@ else:
 model.to(device)
 valid_dataloader = DataLoader(valid_dataset, collate_fn=collate_fn_ner_link, shuffle=False, batch_size=valid_batch_size)
 
-epochs = 3
+epochs = 4
 t_total = int(epochs*len(train_X)/train_batch_size)
 # optimizer = BertAdam([
 #                 {'params': model.LSTM.parameters()},
@@ -77,7 +77,10 @@ t_total = int(epochs*len(train_X)/train_batch_size)
 #                 {'params': model.span_extractor.parameters()},
 #                 {'params': model.bert.parameters(), 'lr': 2e-5}
 #             ],  lr=1e-3, warmup=0.05,t_total=t_total)
-optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
+optimizer = BertAdam([
+    {'params': model.parameters(), 'lr': 2e-5}
+], lr=2e-5, warmup=0.05, t_total=t_total)
+#optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
 clip = 50
 loss_fn = nn.BCEWithLogitsLoss()
 for epoch in range(epochs):

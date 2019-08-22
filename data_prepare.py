@@ -23,6 +23,8 @@ class DataManager(object):
         labels = pd.read_csv(filelabels)
         # 标注错误
         # 标注错误
+        # 标注错误
+        # 纠错逻辑　标注人员将多个很好标注为一个很好，位置错位
         labels.loc[6222, 'O_start'] = 14
         labels.loc[6222, 'O_end'] = 16
         labels.loc[5613, 'O_start'] = 30
@@ -57,9 +59,25 @@ class DataManager(object):
         labels.loc[1684, 'Categories'] = '整体'
         labels.loc[1748, 'Categories'] = '包装'
         labels.loc[2228, 'Categories'] = '尺寸'
+        # 纠错逻辑　标注人员对性价比的标注应当是价格
+        labels.loc[1305, 'Categories'] = '价格'
+        labels.loc[5135, 'Categories'] = '价格'
+        labels.loc[2853, 'Categories'] = '价格'
+        labels.loc[4298, 'Categories'] = '功效'
 
         labels.loc[316, 'AspectTerms'] = '_'
         train['Reviews'] = train['Reviews'].apply(lambda x: x.replace('增品', '赠品'))
+        # 纠错逻辑　labels[(labels.AspectTerms!='_')&(labels.Categories=='整体')]　目标标注人员对于整体这个类别的aspect都是不标的
+        labels.loc[858, 'Categories'] = '气味'
+        labels.loc[1392, 'AspectTerms'] = '_'
+        labels.loc[1392, 'OpinionTerms'] = '好评'
+        labels.loc[1392, 'O_start'] = 41
+        labels.loc[1392, 'O_end'] = 43
+        labels.loc[1906, 'Categories'] = '包装'
+        labels.loc[2008, 'Categories'] = '其他'
+        labels.loc[2689, 'Categories'] = '功效'
+        labels.loc[3460, 'Categories'] = '功效'
+        labels.loc[3890, 'Categories'] = '速度'
 
         return train, labels
 
@@ -118,7 +136,7 @@ class DataManager(object):
         for id in span:
             for index, item in enumerate(span[id]):
                 if item[-1] == 'A':
-                    for other_index in [index-2,index-1,index+1,index+2]:
+                    for other_index in [index-1,index+1]:
                         if other_index>=0 and other_index<=len(span[id])-1 and span[id][other_index][-1] != 'A':
                             [a,b] = sorted([index,other_index])
                             sen = idToText[id-1]

@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import torch, os
 from data_prepare import data_manager
-from spo_dataset import NERCate, get_mask, collate_fn_ner_cate
+from spo_dataset import NERCate, get_mask_attn_pool, collate_fn_ner_cate
 from spo_model import SPOModel, NerLinkCateModel
 from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm as tqdm
@@ -26,11 +26,11 @@ for index, row in test_data.iterrows():
         a = item[0]
         b = item[1]
         dev_X.append((s, a, b))
-print(len(sentences),len(dev_X))
+print(len(sentences), len(dev_X))
 seed_torch(2019)
 pred_vector = []
 round = 0
-name = 'cate'
+name = 'polarity'  # polarity or cate
 if name =='polarity':
     id_label=4
     cate_list = data_manager.polarity
@@ -56,10 +56,10 @@ train_dataset = NERCate([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in train_X], t
 valid_dataset = NERCate([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in dev_X], t,
                             pos1=[x[1] for x in dev_X], pos2=[x[2] for x in dev_X],
                             label=None, use_bert=True)
-train_batch_size = 3
-valid_batch_size = 3
+train_batch_size = 10
+valid_batch_size = 10
 model = NerLinkCateModel(vocab_size=None, init_embedding=None, encoder_size=128, dropout=0.2, num_outputs=len(cate_list), use_bert=True)
-use_cuda=True
+use_cuda = True
 if use_cuda:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 else:
@@ -67,7 +67,7 @@ else:
 model.to(device)
 valid_dataloader = DataLoader(valid_dataset, collate_fn=collate_fn_ner_cate, shuffle=False, batch_size=valid_batch_size)
 
-epochs = 2
+epochs = 3
 t_total = int(epochs*len(train_X)/train_batch_size)
 # optimizer = BertAdam([
 #                 {'params': model.LSTM.parameters()},
@@ -76,7 +76,9 @@ t_total = int(epochs*len(train_X)/train_batch_size)
 #                 {'params': model.span_extractor.parameters()},
 #                 {'params': model.bert.parameters(), 'lr': 2e-5}
 #             ],  lr=1e-3, warmup=0.05,t_total=t_total)
-optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
+#optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
+optimizer = BertAdam(model.parameters(), lr=2e-5, warmup=0.05, t_total=t_total)
+
 clip = 50
 loss_fn = nn.CrossEntropyLoss()
 for epoch in range(epochs):
@@ -85,17 +87,17 @@ for epoch in range(epochs):
     train_loss = 0
     torch.cuda.manual_seed_all(epoch)
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn_ner_cate, shuffle=True, batch_size=train_batch_size)
-    for index, X, label, pos1, pos2, length in tqdm(train_dataloader):
+    for index, X, label, pos1, pos2, length, numerical_f in tqdm(train_dataloader):
         #model.zero_grad()
         X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
         X = X.to(device)
         length = length.to(device)
-        #mask_X = get_mask(X, length, is_cuda=use_cuda).to(device)
+        mask_X = get_mask_attn_pool(X, length, pos1, pos2, is_cuda=use_cuda).to(device).type(torch.float)
         pos1 = pos1.type(torch.LongTensor).to(device)
         pos2 = pos2.type(torch.LongTensor).to(device)
         label = label.to(device).type(torch.long)
 
-        pred = model(X, pos1, pos2, length)
+        pred = model(X, pos1, pos2, length, mask_X, numerical_f)
         loss = loss_fn(pred, label)
         loss.backward()
 
@@ -110,15 +112,15 @@ for epoch in range(epochs):
 model.eval()
 valid_loss = 0
 pred_set = []
-for index, X, pos1, pos2, length in tqdm(valid_dataloader):
+for index, X, pos1, pos2, length, numerical_f in tqdm(valid_dataloader):
     X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
     X = X.to(device)
     length = length.to(device)
-    #mask_X = get_mask(X, length, is_cuda=use_cuda).to(device)
+    mask_X = get_mask_attn_pool(X, length, pos1, pos2, is_cuda=use_cuda).to(device).type(torch.float)
     pos1 = pos1.type(torch.LongTensor).to(device)
     pos2 = pos2.type(torch.LongTensor).to(device)
     with torch.no_grad():
-        pred = model(X, pos1, pos2, length)
+        pred = model(X, pos1, pos2, length, mask_X, numerical_f)
     pred_set.append(pred.cpu().numpy())
 
 pred_set = np.concatenate(pred_set, axis=0)

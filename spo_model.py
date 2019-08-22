@@ -562,7 +562,7 @@ class SPO_Model_Bert(nn.Module):
                             output_all_encoded_layers=True)
 
         bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
-        #X1 = self.LSTM(bert_outputs, length)
+        #bert_outputs = self.LSTM(bert_outputs, length)
         #X1 = self.hidden(bert_outputs)
         logits = self.NER(bert_outputs)
         if not self.use_crf:
@@ -756,14 +756,14 @@ class NerLinkModel(nn.Module):
         self.classify1 = nn.Sequential(
             #nn.BatchNorm1d(3840),
             nn.Dropout(p=dropout),
-            nn.Linear(in_features=3840, out_features=16),
-            nn.ReLU()
+            nn.Linear(in_features=768*2, out_features=1),
+            nn.Sigmoid()
         )
         self.classify2 = nn.Sequential(
             # nn.BatchNorm1d(3840),
             nn.Dropout(p=dropout),
-            nn.Linear(in_features=3840+6+1, out_features=1),
-            nn.Sigmoid()
+            nn.Linear(in_features=3840-768, out_features=768),
+            nn.ReLU()
         )
 
     def forward(self, token_tensor, pos1, pos2, length, numerical_f):
@@ -777,13 +777,15 @@ class NerLinkModel(nn.Module):
             bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
             spans_contexts1 = self.span_extractor(bert_outputs, pos1)
             spans_contexts2 = self.span_extractor(bert_outputs, pos2)
-            last_vector = torch.cat([cls, spans_contexts1, spans_contexts2, numerical_f], dim=-1)
+            last_vector = torch.cat([spans_contexts1, spans_contexts2], dim=-1)
+            last_vector = torch.cat([self.classify2(last_vector),cls], dim=-1)
+
         else:
             X1 = self.word_embedding(token_tensor)
             X1 = self.LSTM(X1, length)
             spans_contexts = self.span_extractor(X1, pos1)
         #self.hidden(spans_contexts)
-        pred = self.classify2(last_vector)
+        pred = self.classify1(last_vector)
         return pred
 
 
@@ -796,7 +798,7 @@ class NerLinkCateModel(nn.Module):
                  dim_num_feat=0,
                  dropout=0.2,
                  seq_dropout=0.1,
-                 num_outputs=5,
+                 num_outputs=0,
                  use_bert=False
                 ):
         super(NerLinkCateModel, self).__init__()
@@ -831,19 +833,19 @@ class NerLinkCateModel(nn.Module):
         hidden_size = 100
         self.hidden = nn.Linear(1536, hidden_size)
         self.classify1 = nn.Sequential(
-            #nn.BatchNorm1d(3840),
-            nn.Dropout(p=dropout),
-            nn.Linear(in_features=3840, out_features=16),
-            nn.ReLU()
+            #nn.Dropout(p=dropout),
+            nn.Linear(in_features=768*5, out_features=768),
+            nn.Tanh()
         )
         self.classify2 = nn.Sequential(
             # nn.BatchNorm1d(3840),
             nn.Dropout(p=dropout),
             nn.Linear(in_features=768*2, out_features=num_outputs),
         )
+
         self.attn_pool = Attention(768)
 
-    def forward(self, token_tensor, pos1, pos2, length, mask):
+    def forward(self, token_tensor, pos1, pos2, length, mask, numerical_f):
         if self.use_bert:
             # self.bert.eval()
             # with torch.no_grad():
@@ -851,11 +853,12 @@ class NerLinkCateModel(nn.Module):
                                             token_type_ids=None,
                                             output_all_encoded_layers=True)
 
-            bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
+            bert_outputs = torch.cat(bert_outputs[-1:], dim=-1)
             span_pool = self.attn_pool(bert_outputs, mask=mask)
-            #spans_contexts1 = self.span_extractor(bert_outputs, pos1)
-            #spans_contexts2 = self.span_extractor(bert_outputs, pos2)
-            last_vector = torch.cat([cls, span_pool], dim=-1)
+            spans_contexts1 = self.span_extractor(bert_outputs, pos1)
+            spans_contexts2 = self.span_extractor(bert_outputs, pos2)
+            span_merge = self.classify1(torch.cat([spans_contexts1,spans_contexts2,span_pool], dim=-1))
+            last_vector = torch.cat([cls,  span_merge], dim=-1)
         else:
             X1 = self.word_embedding(token_tensor)
             X1 = self.LSTM(X1, length)
@@ -863,6 +866,92 @@ class NerLinkCateModel(nn.Module):
         #self.hidden(spans_contexts)
         pred = self.classify2(last_vector)
         return pred
+
+
+
+class NerLinkCateModelMT(nn.Module):
+    def __init__(self,
+                 vocab_size,
+                 init_embedding,
+                 word_embed_size=300,
+                 encoder_size=64,
+                 dim_num_feat=0,
+                 dropout=0.2,
+                 seq_dropout=0.1,
+                 num_outputs1=5,
+                 num_outputs2=5,
+                 use_bert=False
+                ):
+        super(NerLinkCateModelMT, self).__init__()
+        self.use_bert=use_bert
+        if not use_bert:
+            self.word_embedding = nn.Embedding(vocab_size,
+                                               word_embed_size,
+                                               padding_idx=0)
+            self.seq_dropout = seq_dropout
+            self.embed_size = word_embed_size
+            self.encoder_size = encoder_size
+            if init_embedding is not None:
+                self.word_embedding.weight.data.copy_(torch.from_numpy(init_embedding))
+            self.seq_dropout = seq_dropout
+            self.dropout1d = nn.Dropout2d(self.seq_dropout)
+            self.LSTM = LSTMEncoder(embed_size=word_embed_size,
+                                    encoder_size=encoder_size,
+                                    bidirectional=True)
+            self.classify = nn.Sequential(
+                nn.BatchNorm1d(encoder_size * 4),
+                nn.Dropout(p=dropout),
+                nn.Linear(in_features=encoder_size * 4, out_features=num_outputs)
+            )
+            span_size = 2 * encoder_size
+        else:
+            bert_model = 'bert-base-chinese'
+            self.bert = BertModel.from_pretrained(bert_model)
+            span_size = 768
+        self.span_extractor = EndpointSpanExtractor(span_size)
+
+        self.use_layer = -1
+        hidden_size = 100
+        self.hidden = nn.Linear(1536, hidden_size)
+        self.classify1 = nn.Sequential(
+            #nn.Dropout(p=dropout),
+            nn.Linear(in_features=768*5*2, out_features=768),
+            nn.Tanh()
+        )
+        self.classify2 = nn.Sequential(
+            # nn.BatchNorm1d(3840),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=768*2, out_features=num_outputs1),
+        )
+        self.classify3 = nn.Sequential(
+            # nn.BatchNorm1d(3840),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=768 * 2, out_features=num_outputs2),
+        )
+        self.attn_pool = Attention(768*2)
+
+    def forward(self, token_tensor, pos1, pos2, length, mask, numerical_f):
+        if self.use_bert:
+            # self.bert.eval()
+            # with torch.no_grad():
+            bert_outputs, cls = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(),
+                                            token_type_ids=None,
+                                            output_all_encoded_layers=True)
+
+            bert_outputs = torch.cat(bert_outputs[-2:], dim=-1)
+            span_pool = self.attn_pool(bert_outputs, mask=mask)
+            spans_contexts1 = self.span_extractor(bert_outputs, pos1)
+            spans_contexts2 = self.span_extractor(bert_outputs, pos2)
+            span_merge = self.classify1(torch.cat([spans_contexts1,spans_contexts2,span_pool], dim=-1))
+            last_vector = torch.cat([cls,  span_merge], dim=-1)
+        else:
+            X1 = self.word_embedding(token_tensor)
+            X1 = self.LSTM(X1, length)
+            spans_contexts = self.span_extractor(X1, pos1)
+        #self.hidden(spans_contexts)
+        pred1 = self.classify2(last_vector)
+        pred2 = self.classify3(last_vector)
+        return pred1, pred2
 
 
 class EntityLink_v2(nn.Module):

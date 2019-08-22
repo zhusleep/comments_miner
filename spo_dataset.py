@@ -517,6 +517,7 @@ class NERCate(Dataset):
 
     def __getitem__(self, index):
         sentence = torch.tensor(self.X[index])
+        numerical_f = [0]
         c = True
         if not c:
             pos1 = [0, 0]
@@ -524,7 +525,6 @@ class NERCate(Dataset):
             try:
                 pos2 = [self.pos2[index][0] + 1, self.pos2[index][1] + 1]
             except:
-                pos2 = [0, 0]
                 pos2 = [self.pos1[index][0] + 1, self.pos1[index][1] + 1]
         else:
             try:
@@ -548,9 +548,83 @@ class NERCate(Dataset):
         if pos2[1] > length:
             raise Exception
         if label is not None:
-            return index, sentence, label, pos1, pos2, length
+            return index, sentence, label, pos1, pos2, length, numerical_f
         else:
-            return index, sentence, pos1, pos2, length
+            return index, sentence, pos1, pos2, length, numerical_f
+
+
+class NERCateMT(Dataset):
+    def __init__(self, X, tokenizer, pos1, pos2, polar_label=None,cate_label=None, use_bert=False):
+        super(NERCateMT, self).__init__()
+        self.raw_X = X
+        self.cate_label = cate_label
+        self.polar_label=polar_label
+        self.tokenizer = tokenizer
+        if not use_bert:
+            self.X = tokenizer.transform(X)        # X = pad_sequences(X, maxlen=198)
+        else:
+            self.X = self.deal_for_bert(X, self.tokenizer)
+        self.pos1 = pos1
+        self.pos2 = pos2
+        self.length = [len(sen) for sen in self.X]
+
+    def deal_for_bert(self, x, t):
+        bert_tokens = []
+        for item in x:
+            temp = []
+            for w in item:
+                if w in self.tokenizer.vocab:
+                    temp.append(w)
+                else:
+                    temp.append('[UNK]')
+
+            # sen = t.tokenize(''.join(item))
+            indexed_tokens = t.convert_tokens_to_ids(temp)
+            bert_tokens.append(indexed_tokens)
+        return bert_tokens
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, index):
+        sentence = torch.tensor(self.X[index])
+        numerical_f = [0]
+        c = True
+        if not c:
+            pos1 = [0, 0]
+
+            try:
+                pos2 = [self.pos2[index][0] + 1, self.pos2[index][1] + 1]
+            except:
+                pos2 = [self.pos1[index][0] + 1, self.pos1[index][1] + 1]
+        else:
+            try:
+                pos1 = [self.pos1[index][0]+1, self.pos1[index][1]+1]
+            except:
+                pos1 = [0, 0]
+
+            try:
+                pos2 = [self.pos2[index][0]+1, self.pos2[index][1]+1]
+            except:
+                pos2 = [0, 0]
+
+        if self.polar_label is not None:
+            polar_label = self.polar_label[index]
+            cate_label = self.cate_label[index]
+
+        else:
+            polar_label = None
+            cate_label = None
+        length = self.length[index]
+        # if self.ner is not None:
+        #     ner = torch.tensor(self.ner[index])
+        # if self.combined_char_t is not None:
+        if pos2[1] > length:
+            raise Exception
+        if polar_label is not None:
+            return index, sentence, cate_label, polar_label, pos1, pos2, length, numerical_f
+        else:
+            return index, sentence, pos1, pos2, length, numerical_f
 
 
 def pad_sequence(sequences):
@@ -597,13 +671,34 @@ def collate_fn_ner_link(batch):
 
 def collate_fn_ner_cate(batch):
 
-    if len(batch[0]) == 6:
-        index, sentence, label, pos1, pos2, length = zip(*batch)
+    if len(batch[0]) == 7:
+        index, sentence, label, pos1, pos2, length, numerical_f = zip(*batch)
         pos1 = torch.tensor(pos1, dtype=torch.int)
         pos2 = torch.tensor(pos2, dtype=torch.int)
         length = torch.tensor(length, dtype=torch.int)
         label = torch.tensor(label, dtype=torch.long)
-        return index, sentence, label, pos1, pos2, length
+        numerical_f = torch.tensor(numerical_f, dtype=torch.float)
+        return index, sentence, label, pos1, pos2, length, numerical_f
+    else:
+        index, sentence, pos1, pos2, length, numerical_f = zip(*batch)
+        pos1 = torch.tensor(pos1, dtype=torch.int)
+        pos2 = torch.tensor(pos2, dtype=torch.int)
+        length = torch.tensor(length, dtype=torch.int)
+        numerical_f = torch.tensor(numerical_f, dtype=torch.float)
+        return index, sentence, pos1, pos2, length, numerical_f
+
+
+def collate_fn_ner_cate_mt(batch):
+
+    if len(batch[0]) == 8:
+        index, sentence, cate_label, polar_label, pos1, pos2, length, numerical_f = zip(*batch)
+        pos1 = torch.tensor(pos1, dtype=torch.int)
+        pos2 = torch.tensor(pos2, dtype=torch.int)
+        length = torch.tensor(length, dtype=torch.int)
+        cate_label = torch.tensor(cate_label, dtype=torch.long)
+        polar_label = torch.tensor(polar_label, dtype=torch.long)
+        numerical_f = torch.tensor(numerical_f, dtype=torch.float)
+        return index, sentence, cate_label,polar_label, pos1, pos2, length, numerical_f
     else:
         index, sentence, pos1, pos2, length = zip(*batch)
         pos1 = torch.tensor(pos1, dtype=torch.int)

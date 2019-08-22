@@ -20,7 +20,7 @@ logging.basicConfig(filename=current_name,
                     format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S',
                     level=logging.INFO)
-#seed_torch(2019)
+seed_torch(2019)
 file_namne = 'TRAIN/Train_reviews.csv'
 file_labels = 'TRAIN/Train_labels.csv'
 sentences, labels = data_manager.parseData(filename=file_namne, filelabels=file_labels)
@@ -53,7 +53,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     train_dataset = SPO_BERT(train_X, t,  ner=train_ner)
     valid_dataset = SPO_BERT(dev_X, t, ner=dev_ner)
 
-    batch_size = 3
+    batch_size = 10
 
     model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags=len(data_manager.ner_list))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,20 +69,21 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
         ]
 
-    epoch = 10
-    t_total = int(epoch*len(train_X)/batch_size)
+    epochs = 3
+    t_total = int(epochs*len(train_X)/batch_size)
     optimizer = BertAdam([
                     {'params': model.LSTM.parameters()},
                     {'params': model.hidden.parameters()},
                     {'params': model.NER.parameters()},
                     {'params': model.crf_model.parameters()},
                     {'params': model.bert.parameters(), 'lr': 2e-5}
-                ],  lr=1e-3, warmup=0.05,t_total=t_total)
+                ],  lr=1e-3, warmup=0.05, t_total=t_total)
     clip = 50
 
-    for epoch in range(epoch):
+    for epoch in range(epochs):
         model.train()
         train_loss = 0
+        torch.cuda.manual_seed_all(epoch)
         train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, shuffle=True, batch_size=batch_size)
 
         #model.load_state_dict(torch.load('model_ner/ner_bert.pth'))
@@ -163,6 +164,6 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     dev['pred'] = pred_mention
     dev['label'] = label_mention
     dev_all.append(dev)
-    break
+    #break
 dev_all = pd.concat(dev_all,axis=0)
 dev_all.to_csv('result/analysis.csv', sep='\t')

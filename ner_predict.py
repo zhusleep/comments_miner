@@ -47,13 +47,12 @@ t = BertTokenizer.from_pretrained(
 train_dataset = SPO_BERT(train_X, t,  ner=train_ner)
 valid_dataset = SPO_BERT(dev_X, t, ner=None)
 
-batch_size = 3
+batch_size = 10
 
 model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags=len(data_manager.ner_list))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, shuffle=True, batch_size=batch_size)
 valid_dataloader = DataLoader(valid_dataset, collate_fn=collate_fn, shuffle=False, batch_size=batch_size)
 
 param_optimizer = list(model.named_parameters())
@@ -63,8 +62,8 @@ optimizer_grouped_parameters = [
     {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
 
-epoch = 3
-t_total = int(epoch*len(train_X)/batch_size)
+epochs = 3
+t_total = int(epochs*len(train_X)/batch_size)
 optimizer = BertAdam([
                 {'params': model.LSTM.parameters()},
                 {'params': model.hidden.parameters()},
@@ -75,10 +74,12 @@ optimizer = BertAdam([
 clip = 50
 
 #model.load_state_dict(torch.load('model_ner/ner_bert_predict.pth'))
-#
-for epoch in range(epoch):
+
+for epoch in range(epochs):
     model.train()
     train_loss = 0
+    torch.cuda.manual_seed_all(epoch)
+    train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, shuffle=True, batch_size=batch_size)
     for index, X, ner, length in tqdm(train_dataloader):
         # for eval ###################################
 
@@ -102,7 +103,7 @@ for epoch in range(epoch):
         # Clip gradients: gradients are modified in place
         train_loss += loss.item()
     train_loss = train_loss/len(train_X)
-    if epoch==1:break
+    #if epoch==1:break
 
 torch.save(model.state_dict(), 'model_ner/ner_bert_predict.pth')
 #
