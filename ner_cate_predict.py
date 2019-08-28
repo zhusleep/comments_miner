@@ -30,7 +30,7 @@ print(len(sentences), len(dev_X))
 seed_torch(2019)
 pred_vector = []
 round = 0
-name = 'polarity'  # polarity or cate
+name = 'cate'  # polarity or cate
 if name =='polarity':
     id_label=4
     cate_list = data_manager.polarity

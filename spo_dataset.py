@@ -803,6 +803,31 @@ def get_mask_attn_pool(sequences_batch, sequences_lengths, pos1, pos2, is_cuda=T
         return mask
 
 
+def get_mask_pos(sequences_batch, sequences_lengths, pos1, pos2, is_cuda=True):
+    """
+    Get the mask for a batch of padded variable length sequences.
+    Args:
+        sequences_batch: A batch of padded variable length sequences
+            containing word indices. Must be a 2-dimensional tensor of size
+            (batch, sequence).
+        sequences_lengths: A tensor containing the lengths of the sequences in
+            'sequences_batch'. Must be of size (batch).
+    Returns:
+        A mask of size (batch, max_sequence_length), where max_sequence_length
+        is the length of the longest sequence in the batch.
+    """
+    batch_size = sequences_batch.size()[0]
+    max_length = torch.max(sequences_lengths)
+    mask1 = torch.zeros(batch_size, max_length, dtype=torch.uint8)
+    mask2 = torch.zeros(batch_size, max_length, dtype=torch.uint8)
+
+    for i in range(batch_size):
+        mask1[i,pos1[i][0]:pos1[i][1]+1] = 1
+        mask2[i,pos2[i][0]:pos2[i][1]+1] = 1
+    return mask1,mask2
+    #mask[sequences_batch[:, :max_length] == 0] = 0.0
+
+
 def get_mask_bertpiece(sequences_batch, sequences_lengths, pos, is_cuda=True):
     """
     Get the mask for a batch of padded variable length sequences.

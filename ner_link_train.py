@@ -4,7 +4,7 @@ import numpy as np
 
 import torch, os
 from data_prepare import data_manager
-from spo_dataset import NERLINK, get_mask, collate_fn_ner_link
+from spo_dataset import NERLINK, get_mask, collate_fn_ner_link, get_mask_pos
 from spo_model import SPOModel, NerLinkModel
 from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm as tqdm
@@ -77,12 +77,15 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             X = X.to(device)
             length = length.to(device)
             #mask_X = get_mask(X, length, is_cuda=use_cuda).to(device)
+            mask1, mask2 = get_mask_pos(X, length, pos1, pos2, is_cuda=use_cuda)
+            mask1, mask2 = mask1.to(device).type(torch.float), mask2.to(device).type(torch.float)
+
             pos1 = pos1.type(torch.LongTensor).to(device)
             pos2 = pos2.type(torch.LongTensor).to(device)
-            label = label.to(device).type(torch.float).view(-1,1)
+            label = label.to(device).type(torch.float).view(-1, 1)
             numerical_f = numerical_f.to(device)
 
-            pred = model(X, pos1, pos2, length, numerical_f)
+            pred = model(X, pos1, pos2, length, numerical_f, mask1, mask2)
             loss = loss_fn(pred, label)
             loss.backward()
 
@@ -104,12 +107,14 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             X = X.to(device)
             length = length.to(device)
             #mask_X = get_mask(X, length, is_cuda=use_cuda).to(device)
+            mask1, mask2 = get_mask_pos(X, length, pos1, pos2, is_cuda=use_cuda)
+            mask1, mask2 = mask1.to(device).type(torch.float), mask2.to(device).type(torch.float)
             pos1 = pos1.type(torch.LongTensor).to(device)
             pos2 = pos2.type(torch.LongTensor).to(device)
             label = label.to(device).type(torch.float).view(-1,1)
             numerical_f = numerical_f.to(device)
             with torch.no_grad():
-                pred = model(X, pos1, pos2, length, numerical_f)
+                pred = model(X, pos1, pos2, length, numerical_f, mask1, mask2)
             loss = loss_fn(pred, label)
             pred_set.append(pred.cpu().numpy())
             label_set.append(label.cpu().numpy())
@@ -132,7 +137,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     # logging.info(INFO)
     # INFO = 'epoch %d, train loss %f, valid loss %f' % (epoch, train_loss, valid_loss)
     # logging.info(INFO + '\t' + INFO_THRE)
-    break
+    #break
 result = pd.DataFrame()
 result['text'] = [x[0] for x in dev_X]
 result['pos1'] = [x[1] for x in dev_X]
@@ -233,4 +238,24 @@ round 4 epoch 2 train loss　0.052352, val loss 0.052467  acc 0.990964, recall0.
 阈值 [0.4985642]
 real acc 0.992724,recall 0.978375,f1 0.985497
 round 4 epoch 3 train loss　0.052078, val loss 0.052527  acc 0.973529, recall0.943020, f1 0.958032
+"""
+
+"""
+2653 1653
+100%|██████████| 213/213 [00:41<00:00,  5.43it/s]
+阈值 [0.5049927]
+  0%|          | 0/213 [00:00<?, ?it/s]real acc 0.993508,recall 0.975554,f1 0.984449
+round 0 epoch 0 train loss　0.050168, val loss 0.048178  acc 0.976048, recall0.981928, f1 0.978979
+100%|██████████| 213/213 [00:42<00:00,  5.44it/s]
+阈值 [0.8562041]
+real acc 0.997562,recall 0.978183,f1 0.987778
+round 0 epoch 1 train loss　0.047379, val loss 0.047916  acc 0.990769, recall0.969880, f1 0.980213
+100%|██████████| 213/213 [00:44<00:00,  4.98it/s]
+阈值 [0.5467774]
+real acc 0.997558,recall 0.976590,f1 0.986963
+round 0 epoch 2 train loss　0.046908, val loss 0.047983  acc 0.990712, recall0.963855, f1 0.977099
+100%|██████████| 213/213 [00:49<00:00,  4.98it/s]
+阈值 [0.50223666]
+real acc 0.997562,recall 0.978183,f1 0.987778
+round 0 epoch 3 train loss　0.046647, val loss 0.047886  acc 0.990769, recall0.969880, f1 0.980213
 """

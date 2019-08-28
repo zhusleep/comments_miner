@@ -1,4 +1,3 @@
-print('33333')
 import pandas as pd
 import numpy as np
 
@@ -25,8 +24,7 @@ seed_torch(2019)
 file_namne = 'TRAIN/Train_reviews.csv'
 file_labels = 'TRAIN/Train_labels.csv'
 sentences, labels = data_manager.parseData(filename=file_namne, filelabels=file_labels)
-label_result = calc_f1(labels, labels, data_manager)
-print(label_result)
+label_result = cal_ner_result(labels, data_manager.ner_list)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
 round = 0
@@ -108,8 +106,6 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             optimizer.zero_grad()
             # Clip gradients: gradients are modified in place
             train_loss += loss.item()
-            #break
-
         train_loss = train_loss/len(train_X)
 
         model.eval()
@@ -135,15 +131,15 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             valid_loss += loss.item()
         valid_loss = valid_loss/len(dev_X)
 
-        acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, data_manager)
+        acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, data_manager.ner_list)
         INFO = 'epoch %d, train loss %f, valid loss %f, acc %f, recall %f, f1 %f '% (epoch, train_loss, valid_loss,acc,recall,f1)
         logging.info(INFO)
         print(INFO)
-        if epoch == 3:
+        if epoch == 0:
             break
 
-    pred_result = cal_ner_result(pred_set,  data_manager)
-    label_result = cal_ner_result(label_set,  data_manager)
+    pred_result = cal_ner_result(pred_set,  data_manager.ner_list)
+    label_result = cal_ner_result(label_set,  data_manager.ner_list)
     #acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, dev_X, data_manager.ner_list)
     #INFO = 'epoch %d, train loss %f, valid loss %f, acc %f, recall %f, f1 %f '% (epoch, train_loss, valid_loss,acc,recall,f1)
     #logging.info(INFO)
@@ -171,5 +167,3 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     #break
 dev_all = pd.concat(dev_all,axis=0)
 dev_all.to_csv('result/analysis.csv', sep='\t')
-
-

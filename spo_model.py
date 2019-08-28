@@ -762,11 +762,11 @@ class NerLinkModel(nn.Module):
         self.classify2 = nn.Sequential(
             # nn.BatchNorm1d(3840),
             nn.Dropout(p=dropout),
-            nn.Linear(in_features=3840-768, out_features=768),
+            nn.Linear(in_features=3840-768+7, out_features=768),
             nn.ReLU()
         )
 
-    def forward(self, token_tensor, pos1, pos2, length, numerical_f):
+    def forward(self, token_tensor, pos1, pos2, length, numerical_f, mask1=None, mask2=None):
         if self.use_bert:
             # self.bert.eval()
             # with torch.no_grad():
@@ -777,7 +777,7 @@ class NerLinkModel(nn.Module):
             bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
             spans_contexts1 = self.span_extractor(bert_outputs, pos1)
             spans_contexts2 = self.span_extractor(bert_outputs, pos2)
-            last_vector = torch.cat([spans_contexts1, spans_contexts2], dim=-1)
+            last_vector = torch.cat([spans_contexts1, spans_contexts2, numerical_f], dim=-1)
             last_vector = torch.cat([self.classify2(last_vector),cls], dim=-1)
 
         else:

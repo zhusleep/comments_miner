@@ -4,14 +4,13 @@ import json
 from sklearn.metrics import classification_report
 
 
-
-def calc_f1(pred,label,ner_list):
+def calc_f1(pred,label,data_manager):
     ## ['O', 'B', 'I', 'E', 'S']
-    B_token = [ner_list.index('B-A'),ner_list.index('B-O')]
-    I_token = [ner_list.index('I-A'),ner_list.index('I-O')]
-    O_token = ner_list.index('O')
+    B_token = set(data_manager.B_token)
+    E_token = set(data_manager.E_token)
+    S_token = set(data_manager.S_token)
 
-    def parse(sentence,sign):
+    def parse(sentence):
         """
         find B*E or S
         :param sentence:
@@ -21,28 +20,18 @@ def calc_f1(pred,label,ner_list):
         start = None
         for index, word in enumerate(sentence):
             if word in B_token:
-                if start is not None:
-                    end = index
-                    if sentence[start] == B_token[0]:
-                        span.append((start, end - 1, 'A'))
-                    else:
-                        span.append((start, end - 1, 'O'))
-                    start = index
-                else:
-                    start = index
-            elif (word==O_token or word in B_token) and start is not None:
-                end = index
-                # if ''.join(label_sentence[start:end + 1]) in kb_set:
-                #     span.append((start, end+1))
-                #     start = None
-                # else:
-                #     start = None
-                if sentence[start] == B_token[0]:
-                    span.append((start, end-1, 'A'))
-                else:
-                    span.append((start, end-1, 'O'))
+
+                start = index
+            elif word in S_token:
+                span.append((index, index, data_manager.ner_list[word]))
                 start = None
+            elif word in E_token and start is not None:
+                end = index
+                span.append((start, end, data_manager.ner_list[word]))
+                start = None
+
         return span
+
     pred_count = 0
     label_count = 0
     acc_count = 0
@@ -51,9 +40,9 @@ def calc_f1(pred,label,ner_list):
     # test bugs ###############################
     # 原生ner
     for i in range(len(pred)):
-        assert len(pred[i])==len(label[i])
-        m_pred = parse(pred[i], 'pred')
-        m_label = parse(label[i], 'label')
+        assert len(pred[i]) == len(label[i])
+        m_pred = parse(pred[i])
+        m_label = parse(label[i])
         # if len(m_label)!=len(m_list[i]):
         #     raise Exception
         pred_result.append(m_pred)
@@ -63,29 +52,29 @@ def calc_f1(pred,label,ner_list):
         acc_count += sum([1 if x in m_label else 0 for x in m_pred])
     print('pred_count %d,label_count %d' % (pred_count, label_count))
     if pred_count == 0:
-        print('somtthing wrong')
+        print('something wrong')
         acc = 0
     else:
-        acc = acc_count/pred_count
-    recall = acc_count/label_count
-    if acc!=0 and recall!=0:
-        f1 = 2*acc*recall/(acc+recall)
+        acc = acc_count / pred_count
+    recall = acc_count / label_count
+    if acc != 0 and recall != 0:
+        f1 = 2 * acc * recall / (acc + recall)
     else:
         f1 = 0
         print('something wrong!')
 
-    return acc,recall,f1,pred_result,label_result
+    return acc, recall, f1, pred_result, label_result
 
 
-def cal_ner_result(pred,dev,ner_list):
+def cal_ner_result(pred,data_manager):
     ## ['O', 'B', 'I', 'E', 'S']
-    B_token = [ner_list.index('B-A'), ner_list.index('B-O')]
-    I_token = [ner_list.index('I-A'), ner_list.index('I-O')]
-    O_token = ner_list.index('O')
+    B_token = set(data_manager.B_token)
+    E_token = set(data_manager.E_token)
+    S_token = set(data_manager.S_token)
 
     def parse(sentence):
         """
-        find BIO
+        find B*E or S
         :param sentence:
         :return:
         """
@@ -93,23 +82,16 @@ def cal_ner_result(pred,dev,ner_list):
         start = None
         for index, word in enumerate(sentence):
             if word in B_token:
-                if start is not None:
-                    end = index
-                    if sentence[start] == B_token[0]:
-                        span.append((start, end - 1, 'A'))
+                start = index
+            elif word in S_token:
 
-                    else:
-                        span.append((start, end - 1, 'O'))
-                    start = index
-                else:
-                    start = index
-            elif word == O_token and start is not None:
-                end = index
-                if sentence[start] == B_token[0]:
-                    span.append((start, end - 1, 'A'))
-                else:
-                    span.append((start, end - 1, 'O'))
+                span.append((index, index))
                 start = None
+            elif word in E_token and start is not None:
+                end = index
+                span.append((start, end))
+                start = None
+
         return span
     pred_count = 0
     label_count = 0
@@ -123,6 +105,125 @@ def cal_ner_result(pred,dev,ner_list):
     print('pred_count %d' % pred_count)
     return pred_result
 
+#
+# def calc_f1(pred,label,ner_list):
+#     ## ['O', 'B', 'I', 'E', 'S']
+#     B_token = [ner_list.index('B-A'),ner_list.index('B-O')]
+#     I_token = [ner_list.index('I-A'),ner_list.index('I-O')]
+#     O_token = ner_list.index('O')
+#
+#     def parse(sentence,sign):
+#         """
+#         find B*E or S
+#         :param sentence:
+#         :return:
+#         """
+#         span = []
+#         start = None
+#         for index, word in enumerate(sentence):
+#             if word in B_token:
+#                 if start is not None:
+#                     end = index
+#                     if sentence[start] == B_token[0]:
+#                         span.append((start, end - 1, 'A'))
+#                     else:
+#                         span.append((start, end - 1, 'O'))
+#                     start = index
+#                 else:
+#                     start = index
+#             elif (word==O_token or word in B_token) and start is not None:
+#                 end = index
+#                 # if ''.join(label_sentence[start:end + 1]) in kb_set:
+#                 #     span.append((start, end+1))
+#                 #     start = None
+#                 # else:
+#                 #     start = None
+#                 if sentence[start] == B_token[0]:
+#                     span.append((start, end-1, 'A'))
+#                 else:
+#                     span.append((start, end-1, 'O'))
+#                 start = None
+#         return span
+#     pred_count = 0
+#     label_count = 0
+#     acc_count = 0
+#     pred_result = []
+#     label_result = []
+#     # test bugs ###############################
+#     # 原生ner
+#     for i in range(len(pred)):
+#         assert len(pred[i])==len(label[i])
+#         m_pred = parse(pred[i], 'pred')
+#         m_label = parse(label[i], 'label')
+#         # if len(m_label)!=len(m_list[i]):
+#         #     raise Exception
+#         pred_result.append(m_pred)
+#         label_result.append(m_label)
+#         pred_count += len(m_pred)
+#         label_count += len(m_label)
+#         acc_count += sum([1 if x in m_label else 0 for x in m_pred])
+#     print('pred_count %d,label_count %d' % (pred_count, label_count))
+#     if pred_count == 0:
+#         print('somtthing wrong')
+#         acc = 0
+#     else:
+#         acc = acc_count/pred_count
+#     recall = acc_count/label_count
+#     if acc!=0 and recall!=0:
+#         f1 = 2*acc*recall/(acc+recall)
+#     else:
+#         f1 = 0
+#         print('something wrong!')
+#
+#     return acc,recall,f1,pred_result,label_result
+
+
+# def cal_ner_result(pred,ner_list):
+#     ## ['O', 'B', 'I', 'E', 'S']
+#     B_token = [ner_list.index('B-A'), ner_list.index('B-O')]
+#     I_token = [ner_list.index('I-A'), ner_list.index('I-O')]
+#     O_token = ner_list.index('O')
+#
+#     def parse(sentence):
+#         """
+#         find BIO
+#         :param sentence:
+#         :return:
+#         """
+#         span = []
+#         start = None
+#         for index, word in enumerate(sentence):
+#             if word in B_token:
+#                 if start is not None:
+#                     end = index
+#                     if sentence[start] == B_token[0]:
+#                         span.append((start, end - 1, 'A'))
+#
+#                     else:
+#                         span.append((start, end - 1, 'O'))
+#                     start = index
+#                 else:
+#                     start = index
+#             elif word == O_token and start is not None:
+#                 end = index
+#                 if sentence[start] == B_token[0]:
+#                     span.append((start, end - 1, 'A'))
+#                 else:
+#                     span.append((start, end - 1, 'O'))
+#                 start = None
+#         return span
+#     pred_count = 0
+#     label_count = 0
+#     acc_count = 0
+#     pred_result = []
+#     label_result = []
+#     for i in range(len(pred)):
+#         m_pred = parse(pred[i])
+#         pred_result.append(m_pred)
+#         pred_count += len(m_pred)
+#     print('pred_count %d' % pred_count)
+#     return pred_result
+#
 
 def split_list(item, n):
     new_item = []
