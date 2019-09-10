@@ -762,7 +762,7 @@ class NerLinkModel(nn.Module):
         self.classify2 = nn.Sequential(
             # nn.BatchNorm1d(3840),
             nn.Dropout(p=dropout),
-            nn.Linear(in_features=3840-768+7, out_features=768),
+            nn.Linear(in_features=3840-768+8, out_features=768),
             nn.ReLU()
         )
 

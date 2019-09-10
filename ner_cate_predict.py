@@ -20,17 +20,19 @@ file_labels = 'TRAIN/Train_labels.csv'
 sentences = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
 dev_X = []
 test_data = pd.read_pickle('result/ner_link.pkl')
+print(test_data.shape)
 for index, row in test_data.iterrows():
     s = row['text']
     for item in row['result']:
         a = item[0]
         b = item[1]
-        dev_X.append((s, a, b))
+        dev_X.append((s, a, b, item[2], row['id']))
+dev_X = list(set(dev_X))
 print(len(sentences), len(dev_X))
 seed_torch(2019)
 pred_vector = []
 round = 0
-name = 'cate'  # polarity or cate
+name = 'polarity'  # polarity or cate
 if name =='polarity':
     id_label=4
     cate_list = data_manager.polarity
@@ -139,12 +141,11 @@ result = pd.DataFrame()
 result['text'] = [x[0] for x in dev_X]
 result['pos1'] = [x[1] for x in dev_X]
 result['pos2'] = [x[2] for x in dev_X]
-result['predict_%s'%name] = [cate_list[x] for x in top_class]
-result.to_pickle('result/final_%s.pkl'%name)
-#pred_set
-#pred_vector = np.concatenate(pred_vector, axis=0)
-#np.save('result/gensim_vector_bert.npy', pred_vector)
-    # 19 train loss　0.128424, val loss 0.153328, val_cos_loss 91155.319716
+result['predict_%s' % name] = [cate_list[x] for x in top_class]
+result['predict_cate'] = [x[3] for x in dev_X]
+result['id'] = [x[4] for x in dev_X]
+
+result.to_pickle('result/final_%s.pkl' % name)
 
 # 0.954
 # 0.952,0.951,0.9495,0.946

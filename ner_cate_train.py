@@ -24,7 +24,7 @@ seed_torch(2019)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
 round = 0
-name = 'cate'
+name = 'polarity'
 if name =='polarity':
     id_label=4
     cate_list = data_manager.polarity

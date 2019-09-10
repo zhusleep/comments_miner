@@ -46,6 +46,8 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     valid_dataset = NERLINK([['[CLS]'] + list(x[0]) + ['[CLS]'] for x in dev_X], t,
                                 pos1=[x[1] for x in dev_X], pos2=[x[2] for x in dev_X],
                                 label=[x[3] for x in dev_X], use_bert=True, gap=[x[4] for x in dev_X])
+
+    #print(valid_dataset.type_error)
     train_batch_size = 10
     valid_batch_size = 10
     model = NerLinkModel(vocab_size=None, init_embedding=None, encoder_size=128, dropout=0.2, use_bert=True)
@@ -111,7 +113,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             mask1, mask2 = mask1.to(device).type(torch.float), mask2.to(device).type(torch.float)
             pos1 = pos1.type(torch.LongTensor).to(device)
             pos2 = pos2.type(torch.LongTensor).to(device)
-            label = label.to(device).type(torch.float).view(-1,1)
+            label = label.to(device).type(torch.float).view(-1, 1)
             numerical_f = numerical_f.to(device)
             with torch.no_grad():
                 pred = model(X, pos1, pos2, length, numerical_f, mask1, mask2)
@@ -123,6 +125,9 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         valid_loss = valid_loss / len(dev_X)
         pred_set = np.concatenate(pred_set, axis=0)
         label_set = np.concatenate(label_set, axis=0)
+        for i in range(len(pred_set)):
+            if valid_dataset.type_error[i]==0:
+                pred_set[i,0] = 0
         # top_class = np.argmax(pred_set, axis=1)
         # equals = top_class == label_set
         # accuracy = np.mean(equals)
@@ -130,7 +135,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         INFO_THRE, thre_list = get_threshold(pred_set, label_set)
         print('round', round, 'epoch', epoch,'train loss　%f, val loss %f ' % (train_loss, valid_loss), INFO_THRE)
 
-    torch.save(model.state_dict(), 'model_ner/ner_link_round_%s.pth' % round)
+    #torch.save(model.state_dict(), 'model_ner/ner_link_round_%s.pth' % round)
     pred_vector.append(pred_set)
     round += 1
     # INFO = 'train loss %f, valid loss %f, acc %f, recall %f, f1 %f ' % (train_loss, valid_loss, INFO_THRE[0], INFO_THRE[1], INFO_THRE[2])

@@ -1,77 +1,33 @@
-20-Aug-19 14:18:09 - loading vocabulary file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt from cache at /home/zhukaihua/.pytorch_pretrained_bert/8a0c070123c1f794c42a29c6904beb7c1b8715741e235bee04aca2c7636fc83f.9b42061518a39ca00b8b52059fd2bede8daa613f8a8671500e518a8c29de8c00
-20-Aug-19 14:18:10 - loading archive file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese.tar.gz from cache at /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f
-20-Aug-19 14:18:10 - extracting archive file /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f to temp dir /tmp/tmpb5cpnk4n
-20-Aug-19 14:18:12 - Model config {
-  "attention_probs_dropout_prob": 0.1,
-  "directionality": "bidi",
-  "hidden_act": "gelu",
-  "hidden_dropout_prob": 0.1,
-  "hidden_size": 768,
-  "initializer_range": 0.02,
-  "intermediate_size": 3072,
-  "max_position_embeddings": 512,
-  "num_attention_heads": 12,
-  "num_hidden_layers": 12,
-  "pooler_fc_size": 768,
-  "pooler_num_attention_heads": 12,
-  "pooler_num_fc_layers": 3,
-  "pooler_size_per_head": 128,
-  "pooler_type": "first_token_transform",
-  "type_vocab_size": 2,
-  "vocab_size": 21128
-}
-
-20-Aug-19 14:21:19 - epoch 0, train loss 5.573320, valid loss 3.688529, acc 0.839100, recall 0.860947, f1 0.849883 
-20-Aug-19 14:24:20 - epoch 1, train loss 2.595397, valid loss 4.600930, acc 0.820750, recall 0.894083, f1 0.855848 
-20-Aug-19 14:27:21 - epoch 2, train loss 1.753613, valid loss 4.309452, acc 0.841545, recall 0.889349, f1 0.864787 
-20-Aug-19 14:30:21 - epoch 3, train loss 1.098823, valid loss 6.616018, acc 0.839733, recall 0.892899, f1 0.865500 
-20-Aug-19 14:30:22 - loading vocabulary file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt from cache at /home/zhukaihua/.pytorch_pretrained_bert/8a0c070123c1f794c42a29c6904beb7c1b8715741e235bee04aca2c7636fc83f.9b42061518a39ca00b8b52059fd2bede8daa613f8a8671500e518a8c29de8c00
-20-Aug-19 14:30:23 - loading archive file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese.tar.gz from cache at /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f
-20-Aug-19 14:30:23 - extracting archive file /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f to temp dir /tmp/tmpei6s2tfn
-20-Aug-19 14:30:26 - Model config {
-  "attention_probs_dropout_prob": 0.1,
-  "directionality": "bidi",
-  "hidden_act": "gelu",
-  "hidden_dropout_prob": 0.1,
-  "hidden_size": 768,
-  "initializer_range": 0.02,
-  "intermediate_size": 3072,
-  "max_position_embeddings": 512,
-  "num_attention_heads": 12,
-  "num_hidden_layers": 12,
-  "pooler_fc_size": 768,
-  "pooler_num_attention_heads": 12,
-  "pooler_num_fc_layers": 3,
-  "pooler_size_per_head": 128,
-  "pooler_type": "first_token_transform",
-  "type_vocab_size": 2,
-  "vocab_size": 21128
-}
-
-20-Aug-19 14:33:31 - epoch 0, train loss 5.747195, valid loss 3.831405, acc 0.876798, recall 0.829586, f1 0.852539 
-20-Aug-19 14:36:35 - epoch 1, train loss 2.579825, valid loss 4.011915, acc 0.875610, recall 0.849704, f1 0.862462 
-20-Aug-19 14:39:37 - epoch 2, train loss 1.747289, valid loss 5.205122, acc 0.842556, recall 0.873964, f1 0.857973 
-20-Aug-19 14:42:38 - epoch 3, train loss 1.109458, valid loss 6.363153, acc 0.874469, recall 0.853254, f1 0.863732 
-20-Aug-19 14:42:38 - loading vocabulary file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt from cache at /home/zhukaihua/.pytorch_pretrained_bert/8a0c070123c1f794c42a29c6904beb7c1b8715741e235bee04aca2c7636fc83f.9b42061518a39ca00b8b52059fd2bede8daa613f8a8671500e518a8c29de8c00
-20-Aug-19 14:42:39 - loading archive file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese.tar.gz from cache at /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f
-20-Aug-19 14:42:39 - extracting archive file /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f to temp dir /tmp/tmp6gwf72z4
-20-Aug-19 14:42:42 - Model config {
-  "attention_probs_dropout_prob": 0.1,
-  "directionality": "bidi",
-  "hidden_act": "gelu",
-  "hidden_dropout_prob": 0.1,
-  "hidden_size": 768,
-  "initializer_range": 0.02,
-  "intermediate_size": 3072,
-  "max_position_embeddings": 512,
-  "num_attention_heads": 12,
-  "num_hidden_layers": 12,
-  "pooler_fc_size": 768,
-  "pooler_num_attention_heads": 12,
-  "pooler_num_fc_layers": 3,
-  "pooler_size_per_head": 128,
-  "pooler_type": "first_token_transform",
-  "type_vocab_size": 2,
-  "vocab_size": 21128
-}
-
+3553 1714
+100%|██████████| 285/285 [00:57<00:00,  5.36it/s]
+阈值 [0.507574]
+  0%|          | 0/285 [00:00<?, ?it/s]real acc 0.995139,recall 0.978677,f1 0.986839
+round 0 epoch 0 train loss　0.059258, val loss 0.054849  acc 0.981982, recall0.934286, f1 0.957540
+100%|██████████| 285/285 [01:01<00:00,  5.22it/s]
+阈值 [0.56365246]
+real acc 0.998398,recall 0.992892,f1 0.995637
+round 0 epoch 1 train loss　0.054899, val loss 0.053634  acc 0.994135, recall0.968571, f1 0.981187
+100%|██████████| 285/285 [01:04<00:00,  5.07it/s]
+阈值 [0.54667974]
+  0%|          | 0/285 [00:00<?, ?it/s]real acc 0.996769,recall 0.983394,f1 0.990037
+round 0 epoch 2 train loss　0.054048, val loss 0.054299  acc 0.988024, recall0.942857, f1 0.964912
+100%|██████████| 285/285 [01:04<00:00,  5.02it/s]
+阈值 [0.6306632]
+real acc 0.996775,recall 0.984988,f1 0.990846
+round 0 epoch 3 train loss　0.053522, val loss 0.053844  acc 0.988095, recall0.948571, f1 0.967930
+100%|██████████| 285/285 [01:04<00:00,  5.05it/s]
+阈值 [0.5535254]
+real acc 0.992664,recall 0.970406,f1 0.981409
+round 1 epoch 0 train loss　0.061191, val loss 0.057937  acc 0.972727, recall0.949704, f1 0.961078
+100%|██████████| 285/285 [01:04<00:00,  4.96it/s]
+阈值 [0.518925]
+real acc 0.997558,recall 0.976590,f1 0.986963
+round 1 epoch 1 train loss　0.055767, val loss 0.055916  acc 0.990712, recall0.946746, f1 0.968230
+100%|██████████| 285/285 [01:04<00:00,  4.95it/s]
+阈值 [0.5206019]
+real acc 0.998374,recall 0.978550,f1 0.988363
+round 1 epoch 2 train loss　0.054078, val loss 0.054984  acc 0.993808, recall0.949704, f1 0.971256
+100%|██████████| 285/285 [01:04<00:00,  5.02it/s]
+阈值 [0.54803437]
+real acc 0.994299,recall 0.972733,f1 0.983398
+round 1 epoch 3 train loss　0.053369, val loss 0.054843  acc 0.978659, recall0.949704, f1 0.963964

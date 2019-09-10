@@ -166,12 +166,12 @@ class DataManager(object):
             if row['id'] not in span:
                 span[row['id']] = []
             if row['AspectTerms'] != '_':
-                span[row['id']].append((int(row['A_start']), int(row['A_end'])-1, 'A'))
+                span[row['id']].append((int(row['A_start']), int(row['A_end'])-1, 'A', row['Categories']))
             if row['OpinionTerms'] != '_':
-                span[row['id']].append((int(row['O_start']), int(row['O_end'])-1, 'O'))
+                span[row['id']].append((int(row['O_start']), int(row['O_end'])-1, 'O', row['Categories']))
             if row['AspectTerms'] != '_' and row['OpinionTerms'] != '_':
-                [a,b] = sorted([(int(row['A_start']), int(row['A_end'])-1, 'A'), (int(row['O_start']), int(row['O_end'])-1,'O')],key=lambda x:x[0],reverse=False)
-                AO_connect.append((row['id'],a,b))
+                [a,b] = sorted([(int(row['A_start']), int(row['A_end'])-1, 'A', row['Categories']), (int(row['O_start']), int(row['O_end'])-1,'O', row['Categories'])],key=lambda x:x[0],reverse=False)
+                AO_connect.append((row['id'], a, b))
         AO_connect = set(AO_connect)
         for id in span:
             span[id] = sorted(list(set(span[id])), key=lambda x: x[0], reverse=False)
@@ -181,13 +181,14 @@ class DataManager(object):
         training = []
         for id in span:
             for index, item in enumerate(span[id]):
-                if item[-1] == 'A':
+                if item[2] == 'A':
                     for other_index in [index-2,index-1,index+1,index+2]:
-                        if other_index>=0 and other_index<=len(span[id])-1 and span[id][other_index][-1] != 'A':
-                            [a,b] = sorted([index,other_index])
+                        if other_index>=0 and other_index<=len(span[id])-1 and span[id][other_index][2] != 'A':# and span[id][other_index][3]==span[id][index][3]:
+                            [a, b] = sorted([index, other_index])
                             sen = idToText[id-1]
-                            if (id,span[id][a],span[id][b]) in AO_connect:
-                                training.append((sen,span[id][a],span[id][b],1,abs(other_index-index)-1))
+                            if (id, span[id][a], span[id][b]) in AO_connect:
+                                training.append((sen, span[id][a], span[id][b],1,abs(other_index-index)-1))
+
                             else:
                                 training.append((sen,span[id][a],span[id][b],0,abs(other_index-index)-1))
         return training

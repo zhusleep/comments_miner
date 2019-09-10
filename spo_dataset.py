@@ -414,6 +414,7 @@ class NERLINK(Dataset):
             self.X = self.deal_for_bert(X, self.tokenizer)
         self.pos1 = pos1
         self.pos2 = pos2
+        self.type_error = [1 if a[3]==b[3] else 0 for a,b in zip(self.pos1,self.pos2)]
         self.length = [len(sen) for sen in self.X]
 
     def deal_for_bert(self, x, t):
@@ -434,10 +435,10 @@ class NERLINK(Dataset):
     def __len__(self):
         return len(self.X)
 
-    def numerical_f(self, sentence, pos1, pos2,index):
+    def numerical_f(self, sentence, pos1, pos2, index):
         feature = []
         # A first
-        if pos1[-1] == 'A':
+        if pos1[2] == 'A':
             feature.append(1)
         else:
             feature.append(0)
@@ -460,6 +461,10 @@ class NERLINK(Dataset):
         # index gap
         #feature.append(1)
         feature.append(self.gap[index])
+        if pos2[3]==pos1[3]:
+            feature.append(1)
+        else:
+            feature.append(0)
         return feature
 
     def __getitem__(self, index):

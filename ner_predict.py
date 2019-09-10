@@ -32,7 +32,7 @@ dev_X = pd.read_csv('test/Test_reviews.csv')['Reviews']
 train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
 dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
 train_ner = [[0]+list(temp)+[0]for temp in labels]
-result = cal_ner_result(train_ner, train_X, data_manager.ner_list)
+result = cal_ner_result(train_ner, data_manager)
 
 BERT_MODEL = 'bert-base-chinese'
 CASED = False
@@ -120,12 +120,7 @@ for index, X, length in tqdm(valid_dataloader):
         pred_set.append(item[0:length.cpu().numpy()[i]])
 
 # stop
-result = cal_ner_result(pred_set, dev_X, data_manager.ner_list)
-#acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, dev_X, data_manager.ner_list)
-#INFO = 'epoch %d, train loss %f, valid loss %f, acc %f, recall %f, f1 %f '% (epoch, train_loss, valid_loss,acc,recall,f1)
-#logging.info(INFO)
-#print(INFO)
-#print(INFO+'\t'+INFO_THRE)
+result = cal_ner_result(pred_set, data_manager)
 
 # 正负样本分析
 dev = pd.DataFrame()

@@ -144,11 +144,6 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
 
     pred_result = cal_ner_result(pred_set,  data_manager)
     label_result = cal_ner_result(label_set,  data_manager)
-    #acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, dev_X, data_manager.ner_list)
-    #INFO = 'epoch %d, train loss %f, valid loss %f, acc %f, recall %f, f1 %f '% (epoch, train_loss, valid_loss,acc,recall,f1)
-    #logging.info(INFO)
-    #print(INFO)
-    #print(INFO+'\t'+INFO_THRE)
     # 正负样本分析
     dev = pd.DataFrame()
     dev['text'] = dev_X
@@ -168,7 +163,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     dev['pred'] = pred_mention
     dev['label'] = label_mention
     dev_all.append(dev)
-    #break
+    break
 dev_all = pd.concat(dev_all,axis=0)
 dev_all.to_csv('result/analysis.csv', sep='\t')
 

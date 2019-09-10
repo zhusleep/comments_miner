@@ -22,22 +22,22 @@ sentences = data_manager.read_nerlink(filename=file_name, filelabels=file_labels
 test_data = pd.read_pickle('result/ner_bert_result.pkl')
 test_data = test_data.reset_index().rename(columns={'index':'id'})
 test_data['text'] = test_data['text'].apply(lambda x:''.join(x[1:-1]))
-test_data['pos'] = test_data['pos'].apply(lambda x:[(item[0]-1,item[1]-1,item[2]) for item in x])
+test_data['pos'] = test_data['pos'].apply(lambda x:[(item[0]-1,item[1]-1,item[2][1],item[2][2:]) for item in x])
 span = test_data['pos'].to_dict()
 idToText = test_data['text'].to_dict()
 # find potential A-O connection
 training = []
 for id in span:
     for index, item in enumerate(span[id]):
-        if item[-1] == 'A':
+        if item[2] == 'A':
             for other_index in [index - 2, index - 1, index + 1, index + 2]:
-                if other_index >= 0 and other_index <= len(span[id]) - 1 and span[id][other_index][-1] != 'A':
+                if other_index >= 0 and other_index <= len(span[id])-1 and span[id][other_index][2] != 'A':# and span[id][other_index][3]==span[id][index][3]:
                     [a, b] = sorted([index, other_index])
                     sen = idToText[id]
                     # label 0 temepory
                     training.append((sen, span[id][a], span[id][b], 0, abs(other_index - index) - 1, id))
 
-print(len(sentences),sum([x[3] for x in sentences]))
+print(len(sentences), sum([x[3] for x in sentences]))
 print(len(training))
 seed_torch(2019)
 
@@ -130,39 +130,60 @@ for index, X, pos1, pos2, length, numerical_f in tqdm(valid_dataloader):
     valid_loss += loss.item()
 
 pred_set = np.concatenate(pred_set, axis=0)
+
 AO_link = {}
-thre = cal_threshold(pred_set)
+# thre = cal_threshold(pred_set)
+thre = 0.002
 true_link = 0
 for index, item in enumerate(dev_X):
 
     if pred_set[index,0]>=thre:
         true_link +=1
         if item[5] not in AO_link:
-            AO_link[item[5]] = [(item[1],item[2])]
+            AO_link[item[5]] = [(item[1], item[2])] #
         else:
             AO_link[item[5]].append((item[1],item[2]))
-print('true link', true_link)
+print('old true link', true_link)
+
+for i in range(len(pred_set)):
+    if valid_dataset.type_error[i] == 0:
+        pred_set[i, 0] = 0
+
+AO_link = {}
+# thre = cal_threshold(pred_set)
+thre = 0.002
+true_link = 0
+for index, item in enumerate(dev_X):
+
+    if pred_set[index,0]>=thre:
+        true_link +=1
+        if item[5] not in AO_link:
+            AO_link[item[5]] = [(item[1], item[2])]
+        else:
+            AO_link[item[5]].append((item[1],item[2]))
+print('new true link', true_link)
 
 
-def generate_result(pos,id):
+def generate_result(pos, id):
     result = []
     for ner in pos:
         flag = False
         if id in AO_link:
             for item in AO_link[id]:
+
                 if ner in item:
                     flag = 1
-                    item = sorted(item,key=lambda x:x[2])
+                    item = sorted(item,key=lambda x: x[2])
                     if item not in result:
-                        result.append(item)
+                        result.append((item[0], item[1], ner[3]))
         if not flag:
             if ner[2]=='A':
-                result.append((ner, None))
+                result.append((ner, None, ner[3]))
             else:
-                result.append((None, ner))
+                result.append((None, ner, ner[3]))
     return result
 
-
-test_data['result'] = test_data.apply(lambda x: generate_result(x.pos,x.id),axis=1)
+print(len(test_data))
+test_data['result'] = test_data.apply(lambda x: generate_result(x.pos, x.id), axis=1)
 test_data.to_pickle('result/ner_link.pkl')
 

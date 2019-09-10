@@ -24,3 +24,9 @@
     
 { 正面、中性、负面 }
 
+7. 目前使用方法pipeline 
+* ner_predict.py 实体识别
+* ner_link_predict.py 两两实体匹配形成关系
+* ner_cate_predict.py 关系极性判断
+** 后缀为train.py的是实验代码，predict.py的是正规训练预测代码
+

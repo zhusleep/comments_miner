@@ -85,11 +85,11 @@ def cal_ner_result(pred,data_manager):
                 start = index
             elif word in S_token:
 
-                span.append((index, index))
+                span.append((index, index, data_manager.ner_list[word]))
                 start = None
             elif word in E_token and start is not None:
                 end = index
-                span.append((start, end))
+                span.append((start, end, data_manager.ner_list[word]))
                 start = None
 
         return span
@@ -293,7 +293,10 @@ def get_threshold(predict, label, num_feature=1):
         thre_list.append(cut_thre)
     print('阈值', thre_list)
     count = len(label)
-
+    # pred_list = sorted(list(predict[:, 0].flatten()), reverse=False)
+    # k = int(len(pred_list) * 0.09)
+    # thre_list = [pred_list[k]]
+    thre_list = [0.004]
     thre_list = np.array(thre_list).reshape(1, -1).repeat(count, axis=0)
     result = np.where(predict < thre_list, 0, 1)
     result_f = result.flatten()
