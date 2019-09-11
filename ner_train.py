@@ -14,6 +14,7 @@ from pytorch_pretrained_bert import BertTokenizer, BertAdam
 import logging
 import time
 from sklearn.model_selection import KFold
+import gc
 
 current_name = 'log/%s.txt' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 logging.basicConfig(filename=current_name,
@@ -22,17 +23,21 @@ logging.basicConfig(filename=current_name,
                     datefmt='%d-%b-%y %H:%M:%S',
                     level=logging.INFO)
 seed_torch(2019)
-file_namne = 'TRAIN/Train_reviews.csv'
-file_labels = 'TRAIN/Train_labels.csv'
+file_namne = 'TRAIN/Train_makeup_reviews.csv'
+file_labels = 'TRAIN/Train_makeup_labels.csv'
 sentences, labels = data_manager.parseData(filename=file_namne, filelabels=file_labels)
-label_result = calc_f1(labels, labels, data_manager)
-print(label_result)
+#label_result = calc_f1(labels, labels, data_manager)
+#print(label_result)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
 round = 0
 dev_all = []
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     ## deal for bert
+    # if round<3:
+    #     round+=1
+    #     continue
+
     train_X = [sentences[i] for i in train_index]
     train_ner = [labels[i] for i in train_index]
     dev_X = [sentences[i] for i in test_index]
@@ -40,24 +45,25 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
 
     train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in train_X]
     dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
-    train_ner = [[0]+list(temp)+[0]for temp in train_ner]
-    dev_ner = [[0]+list(temp)+[0] for temp in dev_ner]
+    train_ner = [([0]+list(temp[0])+[0],[0]+list(temp[1])+[0],[0]+list(temp[2])+[0],[0]+list(temp[3])+[0]) for temp in train_ner]
+    dev_ner = [([0]+list(temp[0])+[0],[0]+list(temp[1])+[0],[0]+list(temp[2])+[0],[0]+list(temp[3])+[0]) for temp in dev_ner]
 
     BERT_MODEL = 'bert-base-chinese'
     CASED = False
     t = BertTokenizer.from_pretrained(
         BERT_MODEL,
-        do_lower_case=True,
-        never_split = ("[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]")
+        do_lower_case=True
+        #never_split = ("[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]")
     #    cache_dir="~/.pytorch_pretrained_bert/bert-large-uncased-vocab.txt"
     )
 
     train_dataset = SPO_BERT(train_X, t,  ner=train_ner)
     valid_dataset = SPO_BERT(dev_X, t, ner=dev_ner)
 
-    batch_size = 10
+    batch_size = 20
 
-    model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags=len(data_manager.ner_list))
+    model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags1=len(data_manager.ner_list), num_tags2=len(data_manager.ner_list2),
+                           num_tags3=len(data_manager.ner_list3), num_tags4=len(data_manager.ner_list4))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
@@ -76,8 +82,12 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     optimizer = BertAdam([
                     {'params': model.LSTM.parameters()},
                     {'params': model.hidden.parameters()},
-                    {'params': model.NER.parameters()},
-                    {'params': model.crf_model.parameters()},
+                    {'params': model.NER1.parameters()},
+                    # {'params': model.crf_model1.parameters()},
+                    # {'params': model.NER2.parameters()},
+                    # {'params': model.crf_model2.parameters()},
+                    # {'params': model.NER3.parameters()},
+                    # {'params': model.crf_model3.parameters()},
                     {'params': model.bert.parameters(), 'lr': 2e-5}
                 ],  lr=1e-3, warmup=0.05, t_total=t_total)
     clip = 50
@@ -89,17 +99,23 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, shuffle=True, batch_size=batch_size)
 
         #model.load_state_dict(torch.load('model_ner/ner_bert.pth'))
-        for index, X, ner, length in tqdm(train_dataloader):
+        for index, X, ner1, ner2,ner3,ner4, length in tqdm(train_dataloader):
             #model.zero_grad()
             X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
             X = X.cuda()
             length = length.cuda()
             #ner = ner.type(torch.float).cuda()
             mask_X = get_mask(X, length, is_cuda=True).cuda()
-            ner = nn.utils.rnn.pad_sequence(ner, batch_first=True).type(torch.LongTensor)
-            ner = ner.cuda()
+            ner1 = nn.utils.rnn.pad_sequence(ner1, batch_first=True).type(torch.LongTensor)
+            ner1 = ner1.cuda()
+            ner2 = nn.utils.rnn.pad_sequence(ner2, batch_first=True).type(torch.LongTensor)
+            ner2 = ner2.cuda()
+            ner3 = nn.utils.rnn.pad_sequence(ner3, batch_first=True).type(torch.LongTensor)
+            ner3 = ner3.cuda()
+            ner4 = nn.utils.rnn.pad_sequence(ner4, batch_first=True).type(torch.LongTensor)
+            ner4 = ner4.cuda()
 
-            loss = model.cal_loss(X, mask_X, length, label=ner)
+            loss = model.cal_loss(X, mask_X, length, label1=ner1, label2=ner2, label3=ner3, label4=ner4)
             loss.backward()
 
             #loss = loss_fn(pred, ner)
@@ -116,17 +132,24 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         valid_loss = 0
         pred_set = []
         label_set = []
-        for index, X, ner, length in tqdm(valid_dataloader):
+        for index, X, ner1, ner2, ner3,ner4, length in tqdm(valid_dataloader):
             X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
             X = X.cuda()
             length = length.cuda()
             mask_X = get_mask(X, length, is_cuda=True).cuda()
-            label = ner
-            ner = nn.utils.rnn.pad_sequence(ner, batch_first=True).type(torch.LongTensor)
-            ner = ner.cuda()
+            label = ner1
+            ner1 = nn.utils.rnn.pad_sequence(ner1, batch_first=True).type(torch.LongTensor)
+            ner1 = ner1.cuda()
+            ner2 = nn.utils.rnn.pad_sequence(ner2, batch_first=True).type(torch.LongTensor)
+            ner2 = ner2.cuda()
+            ner3 = nn.utils.rnn.pad_sequence(ner3, batch_first=True).type(torch.LongTensor)
+
+            ner3 = ner3.cuda()
+            ner4 = nn.utils.rnn.pad_sequence(ner4, batch_first=True).type(torch.LongTensor)
+            ner4 = ner4.cuda()
             with torch.no_grad():
                 pred = model(X, mask_X, length)
-                loss = model.cal_loss(X, mask_X, length, label=ner)
+                loss = model.cal_loss(X, mask_X, length, label1=ner1, label2=ner2, label3=ner3, label4=ner4)
             for i, item in enumerate(pred):
                 pred_set.append(item[0:length.cpu().numpy()[i]])
             #pred_set.extend(pred)
@@ -134,7 +157,8 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
                 label_set.append(item.numpy())
             valid_loss += loss.item()
         valid_loss = valid_loss/len(dev_X)
-
+        del X,ner1,ner2,ner3,ner4,mask_X,model
+        gc.collect()
         acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, data_manager)
         INFO = 'epoch %d, train loss %f, valid loss %f, acc %f, recall %f, f1 %f '% (epoch, train_loss, valid_loss,acc,recall,f1)
         logging.info(INFO)
@@ -163,7 +187,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     dev['pred'] = pred_mention
     dev['label'] = label_mention
     dev_all.append(dev)
-    break
+    #break
 dev_all = pd.concat(dev_all,axis=0)
 dev_all.to_csv('result/analysis.csv', sep='\t')
 

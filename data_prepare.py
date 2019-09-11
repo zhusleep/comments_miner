@@ -10,10 +10,9 @@ class DataManager(object):
 
     def build_ner_list(self):
         bio = False
-        if bio:
-            self.ner_list = ['O', 'B-A', 'I-A', 'B-O', 'I-O']
-        else:
-            self.ner_list = ['O', 'B-A', 'I-A', 'E-A', 'S-A', 'B-O', 'I-O', 'E-O', 'S-O']
+        #self.ner_list2 = ['O', 'B-A', 'I-A', 'B-O', 'I-O']
+
+        self.ner_list2 = ['O', 'B-A', 'I-A', 'E-A', 'S-A', 'B-O', 'I-O', 'E-O', 'S-O']
         ner_list = ['O']
         self.B_token = []
         self.E_token = []
@@ -31,29 +30,38 @@ class DataManager(object):
             if c[0]=='S':
                 self.S_token.append(ner_list.index(c))
         self.ner_list = ner_list
+        self.ner_list3 = ['O']+[x for x in self.ner_list[1::] if x[1]=='A']
+        self.ner_list4 = ['O']+[x for x in self.ner_list[1::] if x[1]=='O']
+
         print('ner label',len(self.ner_list))
 
     def BIO(self, m, type):
         width = m[1]-m[0]
         if width == 1:
-            result = ['B-'+type]
+            result = ['S-'+type]
         else:
             result = ['I-'+type] * width
             result[0] = 'B-'+type
-        #print(result)
-        return [self.ner_list.index(x) for x in result]
+            result[-1] = 'E-'+type
+        #　print(result)
+        return [self.ner_list2.index(x) for x in result]
 
-    def BMESO(self, m, type, cate):
+    def BMESO(self, m, type, cate,l):
         width = m[1]-m[0]
         if width == 1:
             result = ['S'+type+cate]
-
         else:
             result = ['I'+type+cate] * width
             result[0] = 'B'+type+cate
             result[-1] = 'E'+type+cate
         #print(result)
-        return [self.ner_list.index(x) for x in result]
+        token = []
+        for item in result:
+            if item in l:
+                token.append(l.index(item))
+            else:
+                token.append(0)
+        return token
 
     def read_raw_data(self,filename,filelabels):
         train = pd.read_csv(filename)
@@ -61,64 +69,86 @@ class DataManager(object):
         # 标注错误
         # 标注错误
         # 纠错逻辑　标注人员将多个很好标注为一个很好，位置错位
-        labels.loc[6222, 'O_start'] = 14
-        labels.loc[6222, 'O_end'] = 16
-        labels.loc[5613, 'O_start'] = 30
-        labels.loc[5613, 'O_end'] = 32
-        labels.loc[2488, 'O_start'] = 28
-        labels.loc[2488, 'O_end'] = 30
-        labels.loc[2224, 'O_start'] = 18
-        labels.loc[2224, 'O_end'] = 20
-        labels.loc[2610, 'O_start'] = 44
-        labels.loc[2610, 'O_end'] = 46
-        labels.loc[2146, 'O_start'] = 15
-        labels.loc[2146, 'O_end'] = 17
-        labels.loc[1858, 'O_start'] = 38
-        labels.loc[1858, 'O_end'] = 39
-        labels.loc[866, 'A_start'] = 26
-        labels.loc[866, 'A_end'] = 28
-        labels.loc[2488, 'O_start'] = 5
-        labels.loc[2488, 'O_end'] = 7
-        labels.loc[1931, 'A_end'] = 11
-        labels.loc[1931, 'O_end'] = 14
-        labels.loc[201, 'O_start'] = 24
-        labels.loc[201, 'O_end'] = 26
-        labels.loc[1163, 'O_start'] = 39
-        labels.loc[1163, 'O_end'] = 41
+        # labels.loc[6222, 'O_start'] = 14
+        # labels.loc[6222, 'O_end'] = 16
+        # labels.loc[5613, 'O_start'] = 30
+        # labels.loc[5613, 'O_end'] = 32
+        # labels.loc[2488, 'O_start'] = 28
+        # labels.loc[2488, 'O_end'] = 30
+        # labels.loc[2224, 'O_start'] = 18
+        # labels.loc[2224, 'O_end'] = 20
+        # labels.loc[2610, 'O_start'] = 44
+        # labels.loc[2610, 'O_end'] = 46
+        # labels.loc[2146, 'O_start'] = 15
+        # labels.loc[2146, 'O_end'] = 17
+        # labels.loc[1858, 'O_start'] = 38
+        # labels.loc[1858, 'O_end'] = 39
+        # labels.loc[866, 'A_start'] = 26
+        # labels.loc[866, 'A_end'] = 28
+        # labels.loc[2488, 'O_start'] = 5
+        # labels.loc[2488, 'O_end'] = 7
+        # labels.loc[1931, 'A_end'] = 11
+        # labels.loc[1931, 'O_end'] = 14
+        # labels.loc[201, 'O_start'] = 24
+        # labels.loc[201, 'O_end'] = 26
+        # labels.loc[1163, 'O_start'] = 39
+        # labels.loc[1163, 'O_end'] = 41
+        #
+        # labels.loc[1699, 'Polarities'] = '负面'
+        # labels.loc[1700, 'Polarities'] = '负面'
+        # labels.loc[1701, 'Polarities'] = '负面'
+        # labels.loc[1679, 'Polarities'] = '负面'
+        # labels.loc[1977, 'Polarities'] = '负面'
+        # labels.loc[2304, 'Polarities'] = '负面'
+        #
+        # labels.loc[3440, 'AspectTerms'] = '_'
+        # labels.loc[3440, 'Categories'] = '整体'
+        # labels.loc[1446, 'Categories'] = '整体'
+        # labels.loc[1684, 'Categories'] = '整体'
+        # labels.loc[1748, 'Categories'] = '包装'
+        # labels.loc[2228, 'Categories'] = '尺寸'
+        # # 纠错逻辑　标注人员对性价比的标注应当是价格
+        # labels.loc[1305, 'Categories'] = '价格'
+        # labels.loc[5135, 'Categories'] = '价格'
+        # labels.loc[2853, 'Categories'] = '价格'
+        # labels.loc[4298, 'Categories'] = '功效'
+        #
+        # labels.loc[316, 'AspectTerms'] = '_'
+        # train['Reviews'] = train['Reviews'].apply(lambda x: x.replace('增品', '赠品'))
+        # # 纠错逻辑　labels[(labels.AspectTerms!='_')&(labels.Categories=='整体')]　目标标注人员对于整体这个类别的aspect都是不标的
+        # labels.loc[858, 'Categories'] = '气味'
+        # labels.loc[1392, 'AspectTerms'] = '_'
+        # labels.loc[1392, 'OpinionTerms'] = '好评'
+        # labels.loc[1392, 'O_start'] = 41
+        # labels.loc[1392, 'O_end'] = 43
+        # labels.loc[1906, 'Categories'] = '包装'
+        # labels.loc[2008, 'Categories'] = '其他'
+        # labels.loc[2689, 'Categories'] = '功效'
+        # labels.loc[3460, 'Categories'] = '功效'
+        # labels.loc[3890, 'Categories'] = '速度'
 
-        labels.loc[1699, 'Polarities'] = '负面'
-        labels.loc[1700, 'Polarities'] = '负面'
-        labels.loc[1701, 'Polarities'] = '负面'
-        labels.loc[1679, 'Polarities'] = '负面'
-        labels.loc[1977, 'Polarities'] = '负面'
-        labels.loc[2304, 'Polarities'] = '负面'
-
-        labels.loc[3440, 'AspectTerms'] = '_'
-        labels.loc[3440, 'Categories'] = '整体'
-        labels.loc[1446, 'Categories'] = '整体'
-        labels.loc[1684, 'Categories'] = '整体'
-        labels.loc[1748, 'Categories'] = '包装'
-        labels.loc[2228, 'Categories'] = '尺寸'
-        # 纠错逻辑　标注人员对性价比的标注应当是价格
-        labels.loc[1305, 'Categories'] = '价格'
-        labels.loc[5135, 'Categories'] = '价格'
-        labels.loc[2853, 'Categories'] = '价格'
-        labels.loc[4298, 'Categories'] = '功效'
-
-        labels.loc[316, 'AspectTerms'] = '_'
-        train['Reviews'] = train['Reviews'].apply(lambda x: x.replace('增品', '赠品'))
-        # 纠错逻辑　labels[(labels.AspectTerms!='_')&(labels.Categories=='整体')]　目标标注人员对于整体这个类别的aspect都是不标的
-        labels.loc[858, 'Categories'] = '气味'
-        labels.loc[1392, 'AspectTerms'] = '_'
-        labels.loc[1392, 'OpinionTerms'] = '好评'
-        labels.loc[1392, 'O_start'] = 41
-        labels.loc[1392, 'O_end'] = 43
-        labels.loc[1906, 'Categories'] = '包装'
-        labels.loc[2008, 'Categories'] = '其他'
-        labels.loc[2689, 'Categories'] = '功效'
-        labels.loc[3460, 'Categories'] = '功效'
-        labels.loc[3890, 'Categories'] = '速度'
-
+        drop_id = []
+        for index, row in labels.iterrows():
+            if row['AspectTerms'] != '_':
+                try:
+                    text = train.loc[row['id'] - 1, 'Reviews'][int(row['A_start']):int(row['A_end'])]
+                    # print(text)
+                    assert text == row['AspectTerms']
+                except:
+                    if row['id'] not in drop_id:
+                        drop_id.append(row['id'])
+                    print(row['AspectTerms'], text, )
+            if row['OpinionTerms'] != '_':
+                try:
+                    text = train.loc[row['id'] - 1, 'Reviews'][int(row['O_start']):int(row['O_end'])]
+                    # print(text)
+                    assert text == row['OpinionTerms']
+                except:
+                    if row['id'] not in drop_id:
+                        drop_id.append(row['id'])
+                    print(row['OpinionTerms'], text, )
+        train = train[~train.id.isin(drop_id)]
+        labels = labels[~labels.id.isin(drop_id)]
         return train, labels
 
     def read_ner_basic_info(self,filename, filelabels):
@@ -147,15 +177,30 @@ class DataManager(object):
         self.read_ner_basic_info(filename, filelabels)
         sentence = []
         ner_labels = []
+        ner_labels2 = []
+        ner_labels3 = []
+        ner_labels4 = []
         for index, row in self.train.iterrows():
             sentence.append(row['Reviews'])
             ner = np.array([0] * len(row['Reviews']))
+            ner2 = np.array([0] * len(row['Reviews']))
+            ner3 = np.array([0] * len(row['Reviews']))
+            ner4 = np.array([0] * len(row['Reviews']))
             for mention_ner in self.span[row['id']]:
-                #ner[mention_ner[0]:mention_ner[1]] = self.BIO(mention_ner[0:2], mention_ner[-1])
-                ner[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3])
+                #print(mention_ner, ner2)
+                #try:
+                ner2[mention_ner[0]:mention_ner[1]] = self.BIO(mention_ner[0:2], mention_ner[2])
+                # except:
+                #     a=1
+                ner[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3], self.ner_list)
+                ner3[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3], self.ner_list3)
+                ner4[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3], self.ner_list4)
             ner_labels.append(ner)
+            ner_labels2.append(ner2)
+            ner_labels3.append(ner3)
+            ner_labels4.append(ner4)
         assert len(ner_labels) == len(sentence)
-        return sentence, ner_labels
+        return sentence, list(zip(ner_labels, ner_labels2, ner_labels3, ner_labels4))
 
     def read_nerlink(self, filename, filelabels):
         train, labels = self.read_raw_data(filename, filelabels)

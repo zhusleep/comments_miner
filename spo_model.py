@@ -516,7 +516,10 @@ class SPO_Model_Bert(nn.Module):
                  dim_num_feat=0,
                  dropout=0.5,
                  seq_dropout=0.1,
-                 num_tags=5
+                 num_tags1=5,
+                 num_tags2=5,
+                 num_tags3=5,
+                 num_tags4=5
               ):
         super(SPO_Model_Bert, self).__init__()
         # self.word_embedding = nn.Embedding(vocab_size,
@@ -550,12 +553,20 @@ class SPO_Model_Bert(nn.Module):
                                 bidirectional=True)
         hidden_size=100
         self.hidden = nn.Linear(2*encoder_size, hidden_size)
-        self.NER = nn.Linear(768, num_tags)
-        self.crf_model = CRF(num_tags=num_tags, batch_first=True)
+        self.NER1 = nn.Linear(768, num_tags1)
+        self.NER2 = nn.Linear(768, num_tags2)
+        self.NER3 = nn.Linear(768, num_tags3)
+        self.NER4 = nn.Linear(768, num_tags4)
+        self.loss_linear1 = nn.Linear(1, 1)
+
+        self.crf_model1 = CRF(num_tags=num_tags1, batch_first=True)
+        self.crf_model2 = CRF(num_tags=num_tags2, batch_first=True)
+        self.crf_model3 = CRF(num_tags=num_tags3, batch_first=True)
+        self.crf_model4 = CRF(num_tags=num_tags4, batch_first=True)
 
         self.use_crf = True
 
-    def cal_loss(self,token_tensor,mask_X,length,label=None):
+    def cal_loss(self,token_tensor,mask_X,length,label1=None,label2=None,label3=None,label4=None):
         # self.bert.eval()
         # with torch.no_grad():
         bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None,
@@ -564,14 +575,22 @@ class SPO_Model_Bert(nn.Module):
         bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
         #bert_outputs = self.LSTM(bert_outputs, length)
         #X1 = self.hidden(bert_outputs)
-        logits = self.NER(bert_outputs)
+        logits1 = self.NER1(bert_outputs)
+        logits2 = self.NER2(bert_outputs)
+        logits3 = self.NER3(bert_outputs)
+        logits4 = self.NER4(bert_outputs)
+
         if not self.use_crf:
             class_probabilities = F.softmax(logits, dim=2)
             loss = sequence_cross_entropy_with_logits(class_probabilities, label, weights=mask_X,
                                                       label_smoothing=False)
         else:
-            loss = -1 * self.crf_model(logits, label, mask=mask_X)
-        return loss
+            loss1 = -1 * self.crf_model1(logits1, label1, mask=mask_X)
+            loss2 = -1 * self.crf_model2(logits2, label2, mask=mask_X)
+            loss3 = -1 * self.crf_model3(logits3, label3, mask=mask_X)
+            loss4 = -1 * self.crf_model4(logits4, label4, mask=mask_X)
+            #loss = self.loss_lineart(torch.cat([loss1,loss2,loss3,loss4]))
+        return loss1+0.3*loss2
 
     def forward(self, token_tensor, mask_X, length):
         batch_size = token_tensor.size()[0]
@@ -585,11 +604,11 @@ class SPO_Model_Bert(nn.Module):
 
         #X1 = self.LSTM(bert_outputs, length)
         #X1 = self.hidden(bert_outputs)
-        logits = self.NER(bert_outputs)
+        logits1 = self.NER1(bert_outputs)
         if self.use_crf:
-            pred = self.crf_model.decode(logits, mask=mask_X)
+            pred = self.crf_model1.decode(logits1, mask=mask_X)
         else:
-            pred = logits.argmax(dim=-1).cpu().numpy()
+            pred = logits1.argmax(dim=-1).cpu().numpy()
         return pred
 
 

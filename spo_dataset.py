@@ -144,14 +144,18 @@ class SPO_BERT(Dataset):
     def __getitem__(self, index):
         sentence = torch.tensor(self.X[index])
         if self.ner is not None:
-            ner = torch.tensor(self.ner[index])
+            ner1 = torch.tensor(self.ner[index][0])
+            ner2 = torch.tensor(self.ner[index][1])
+            ner3 = torch.tensor(self.ner[index][2])
+            ner4 = torch.tensor(self.ner[index][3])
+
         length = self.length[index]
         # if self.ner is not None:
         #     ner = torch.tensor(self.ner[index])
         #if self.combined_char_t is not None:
 
         if  self.ner is not None:
-            return index, sentence, ner, length
+            return index, sentence, ner1, ner2, ner3, ner4, length
         else:
             return index, sentence, length
 
@@ -645,10 +649,10 @@ def pad_sequence(sequences):
 
 def collate_fn(batch):
 
-    if len(batch[0]) == 4:
-        index, X, ner, length = zip(*batch)
+    if len(batch[0]) == 7:
+        index, X, ner1,ner2,ner3,ner4, length = zip(*batch)
         length = torch.tensor(length, dtype=torch.int)
-        return index, X, ner, length,
+        return index, X, ner1,ner2,ner3,ner4, length,
     else:
         index, X, length = zip(*batch)
         length = torch.tensor(length, dtype=torch.int)

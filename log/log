@@ -1,0 +1,95 @@
+09/10/2019 14:37:10 - INFO - root -   epoch 0, train loss 15.632388, valid loss 7.709272, acc 0.769956, recall 0.820922, f1 0.794622
+  0%|          | 0/259 [00:00<?, ?it/s]pred_count 1804,label_count 1692
+epoch 0, train loss 15.632388, valid loss 7.709272, acc 0.769956, recall 0.820922, f1 0.794622
+100%|██████████| 259/259 [01:28<00:00,  3.13it/s]
+100%|██████████| 65/65 [00:07<00:00,  8.86it/s]
+09/10/2019 14:38:46 - INFO - root -   epoch 1, train loss 4.267927, valid loss 6.344889, acc 0.817497, recall 0.833924, f1 0.825629
+  0%|          | 0/259 [00:00<?, ?it/s]pred_count 1726,label_count 1692
+epoch 1, train loss 4.267927, valid loss 6.344889, acc 0.817497, recall 0.833924, f1 0.825629
+100%|██████████| 259/259 [01:30<00:00,  3.31it/s]
+100%|██████████| 65/65 [00:07<00:00,  8.84it/s]
+09/10/2019 14:40:23 - INFO - root -   epoch 2, train loss 2.361598, valid loss 6.813165, acc 0.831487, recall 0.842790, f1 0.837100
+pred_count 1715,label_count 1692
+epoch 2, train loss 2.361598, valid loss 6.813165, acc 0.831487, recall 0.842790, f1 0.837100
+pred_count 1715
+pred_count 1692
+09/10/2019 14:40:24 - INFO - pytorch_pretrained_bert.tokenization -   loading vocabulary file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt from cache at /home/zhukaihua/.pytorch_pretrained_bert/8a0c070123c1f794c42a29c6904beb7c1b8715741e235bee04aca2c7636fc83f.9b42061518a39ca00b8b52059fd2bede8daa613f8a8671500e518a8c29de8c00
+09/10/2019 14:40:25 - INFO - pytorch_pretrained_bert.modeling -   loading archive file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese.tar.gz from cache at /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f
+09/10/2019 14:40:25 - INFO - pytorch_pretrained_bert.modeling -   extracting archive file /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f to temp dir /tmp/tmps520yhht
+09/10/2019 14:40:28 - INFO - pytorch_pretrained_bert.modeling -   Model config {
+  "attention_probs_dropout_prob": 0.1,
+  "directionality": "bidi",
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "max_position_embeddings": 512,
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "pooler_fc_size": 768,
+  "pooler_num_attention_heads": 12,
+  "pooler_num_fc_layers": 3,
+  "pooler_size_per_head": 128,
+  "pooler_type": "first_token_transform",
+  "type_vocab_size": 2,
+  "vocab_size": 21128
+}
+
+100%|██████████| 259/259 [01:29<00:00,  3.27it/s]
+100%|██████████| 65/65 [00:07<00:00,  8.99it/s]
+pred_count 1764,label_count 1690
+epoch 0, train loss 14.687703, valid loss 7.822863, acc 0.777211, recall 0.811243, f1 0.793862
+09/10/2019 14:42:06 - INFO - root -   epoch 0, train loss 14.687703, valid loss 7.822863, acc 0.777211, recall 0.811243, f1 0.793862
+100%|██████████| 259/259 [01:29<00:00,  3.19it/s]
+100%|██████████| 65/65 [00:07<00:00,  8.86it/s]
+09/10/2019 14:43:44 - INFO - root -   epoch 1, train loss 4.357857, valid loss 6.137787, acc 0.829677, recall 0.850296, f1 0.839860
+  0%|          | 0/259 [00:00<?, ?it/s]pred_count 1732,label_count 1690
+epoch 1, train loss 4.357857, valid loss 6.137787, acc 0.829677, recall 0.850296, f1 0.839860
+100%|██████████| 259/259 [01:30<00:00,  3.28it/s]
+100%|██████████| 65/65 [00:07<00:00,  8.77it/s]
+09/10/2019 14:45:21 - INFO - root -   epoch 2, train loss 2.446393, valid loss 6.244724, acc 0.832848, recall 0.846154, f1 0.839448
+pred_count 1717,label_count 1690
+epoch 2, train loss 2.446393, valid loss 6.244724, acc 0.832848, recall 0.846154, f1 0.839448
+pred_count 1717
+pred_count 1690
+09/10/2019 14:45:23 - INFO - pytorch_pretrained_bert.tokenization -   loading vocabulary file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt from cache at /home/zhukaihua/.pytorch_pretrained_bert/8a0c070123c1f794c42a29c6904beb7c1b8715741e235bee04aca2c7636fc83f.9b42061518a39ca00b8b52059fd2bede8daa613f8a8671500e518a8c29de8c00
+09/10/2019 14:45:24 - INFO - pytorch_pretrained_bert.modeling -   loading archive file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese.tar.gz from cache at /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f
+09/10/2019 14:45:24 - INFO - pytorch_pretrained_bert.modeling -   extracting archive file /home/zhukaihua/.pytorch_pretrained_bert/42d4a64dda3243ffeca7ec268d5544122e67d9d06b971608796b483925716512.02ac7d664cff08d793eb00d6aac1d04368a1322435e5fe0a27c70b0b3a85327f to temp dir /tmp/tmpx_flr023
+09/10/2019 14:45:26 - INFO - pytorch_pretrained_bert.modeling -   Model config {
+  "attention_probs_dropout_prob": 0.1,
+  "directionality": "bidi",
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "max_position_embeddings": 512,
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "pooler_fc_size": 768,
+  "pooler_num_attention_heads": 12,
+  "pooler_num_fc_layers": 3,
+  "pooler_size_per_head": 128,
+  "pooler_type": "first_token_transform",
+  "type_vocab_size": 2,
+  "vocab_size": 21128
+}
+
+100%|██████████| 259/259 [01:29<00:00,  3.30it/s]
+100%|██████████| 65/65 [00:07<00:00,  9.03it/s]
+pred_count 1689,label_count 1618
+epoch 0, train loss 14.971312, valid loss 7.118717, acc 0.787448, recall 0.822002, f1 0.804354
+09/10/2019 14:47:04 - INFO - root -   epoch 0, train loss 14.971312, valid loss 7.118717, acc 0.787448, recall 0.822002, f1 0.804354
+100%|██████████| 259/259 [01:29<00:00,  3.10it/s]
+100%|██████████| 65/65 [00:07<00:00,  9.11it/s]
+09/10/2019 14:48:40 - INFO - root -   epoch 1, train loss 4.384858, valid loss 5.979950, acc 0.837252, recall 0.836218, f1 0.836735
+  0%|          | 0/259 [00:00<?, ?it/s]pred_count 1616,label_count 1618
+epoch 1, train loss 4.384858, valid loss 5.979950, acc 0.837252, recall 0.836218, f1 0.836735
+100%|██████████| 259/259 [01:30<00:00,  3.21it/s]
+100%|██████████| 65/65 [00:07<00:00,  8.91it/s]
+pred_count 1612,label_count 1618
+epoch 2, train loss 2.452989, valid loss 6.502282, acc 0.840571, recall 0.837454, f1 0.839009
+
+4 0.832
+5 0.844
