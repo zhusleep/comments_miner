@@ -1,0 +1,37 @@
+12-Sep-19 15:26:40 - Model name 'bert/ernie1/' not found in model shortcut name list (bert-base-uncased, bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, bert-base-multilingual-cased, bert-base-chinese, bert-base-german-cased, bert-large-uncased-whole-word-masking, bert-large-cased-whole-word-masking, bert-large-uncased-whole-word-masking-finetuned-squad, bert-large-cased-whole-word-masking-finetuned-squad, bert-base-cased-finetuned-mrpc). Assuming 'bert/ernie1/' is a path or url to a directory containing tokenizer files.
+12-Sep-19 15:26:40 - Didn't find file bert/ernie1/added_tokens.json. We won't load it.
+12-Sep-19 15:26:40 - Didn't find file bert/ernie1/special_tokens_map.json. We won't load it.
+12-Sep-19 15:26:40 - Didn't find file bert/ernie1/tokenizer_config.json. We won't load it.
+12-Sep-19 15:26:40 - loading file bert/ernie1/vocab.txt
+12-Sep-19 15:26:40 - loading file None
+12-Sep-19 15:26:40 - loading file None
+12-Sep-19 15:26:40 - loading file None
+12-Sep-19 15:26:42 - loading configuration file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-config.json from cache at /home/zhukaihua/.cache/torch/pytorch_transformers/8a3b1cfe5da58286e12a0f5d7d182b8d6eca88c08e26c332ee3817548cf7e60a.0c16faba8be66db3f02805c912e4cf94d3c9cffc1f12fa1a39906f9270f76d33
+12-Sep-19 15:26:42 - Model config {
+  "attention_probs_dropout_prob": 0.1,
+  "directionality": "bidi",
+  "finetuning_task": null,
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "layer_norm_eps": 1e-12,
+  "max_position_embeddings": 512,
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "num_labels": 2,
+  "output_attentions": false,
+  "output_hidden_states": false,
+  "pooler_fc_size": 768,
+  "pooler_num_attention_heads": 12,
+  "pooler_num_fc_layers": 3,
+  "pooler_size_per_head": 128,
+  "pooler_type": "first_token_transform",
+  "pruned_heads": {},
+  "torchscript": false,
+  "type_vocab_size": 2,
+  "vocab_size": 21128
+}
+
+12-Sep-19 15:26:42 - https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin not found in cache or force_download set to True, downloading to /tmp/tmpqz00_kne

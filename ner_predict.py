@@ -22,17 +22,22 @@ logging.basicConfig(filename=current_name,
 
 
 seed_torch(2019)
-file_namne = 'TRAIN/Train_reviews.csv'
-file_labels = 'TRAIN/Train_labels.csv'
+file_namne = 'TRAIN/Train_laptop_reviews.csv'
+file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences, labels = data_manager.parseData(filename=file_namne, filelabels=file_labels)
 # test set
-dev_X = pd.read_csv('test/Test_reviews.csv')['Reviews']
+dev_X = pd.read_csv('TRAIN/Test_reviews.csv')['Reviews']
 
 ## deal for bert
 train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
 dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
 train_ner = [[0]+list(temp)+[0]for temp in labels]
-result = cal_ner_result(train_ner, data_manager)
+
+train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
+dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
+train_ner = [([0]+list(temp[0])+[0],[0]+list(temp[1])+[0],[0]+list(temp[2])+[0],[0]+list(temp[3])+[0],[0]+list(temp[4])+[0]) for temp in labels]
+
+#result = cal_ner_result(train_ner[0], data_manager)
 
 BERT_MODEL = 'bert-base-chinese'
 CASED = False
@@ -47,9 +52,13 @@ t = BertTokenizer.from_pretrained(
 train_dataset = SPO_BERT(train_X, t,  ner=train_ner)
 valid_dataset = SPO_BERT(dev_X, t, ner=None)
 
-batch_size = 10
+batch_size = 20
 
-model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags=len(data_manager.ner_list))
+# model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags=len(data_manager.ner_list))
+model = SPO_Model_Bert(encoder_size=128, dropout=0.5, num_tags1=len(data_manager.ner_list),
+                       num_tags2=len(data_manager.ner_list2), num_tags3=len(data_manager.ner_list3),
+                       num_tags4=len(data_manager.ner_list4), num_tags5=len(data_manager.cate_list) + 1,
+                       pretrain_path=None)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
@@ -62,15 +71,19 @@ optimizer_grouped_parameters = [
     {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
 
-epochs = 3
-t_total = int(epochs*len(train_X)/batch_size)
+epochs = 4
+t_total = int(epochs * len(train_X) / batch_size)
 optimizer = BertAdam([
-                {'params': model.LSTM.parameters()},
-                {'params': model.hidden.parameters()},
-                {'params': model.NER.parameters()},
-                {'params': model.crf_model.parameters()},
-                {'params': model.bert.parameters(), 'lr': 2e-5}
-            ],  lr=1e-3, warmup=0.05, t_total=t_total)
+    {'params': model.LSTM.parameters()},
+    {'params': model.hidden.parameters()},
+    {'params': model.NER1.parameters()},
+    {'params': model.crf_model1.parameters()},
+    {'params': model.NER2.parameters()},
+    {'params': model.crf_model2.parameters()},
+    # {'params': model.NER3.parameters()},
+    # {'params': model.crf_model3.parameters()},
+    {'params': model.bert.parameters(), 'lr': 2e-5}
+], lr=5e-4, warmup=0.05, t_total=t_total)
 clip = 50
 
 #model.load_state_dict(torch.load('model_ner/ner_bert_predict.pth'))
@@ -80,20 +93,25 @@ for epoch in range(epochs):
     train_loss = 0
     torch.cuda.manual_seed_all(epoch)
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, shuffle=True, batch_size=batch_size)
-    for index, X, ner, length in tqdm(train_dataloader):
-        # for eval ###################################
-
-        # ##########################################
-        #model.zero_grad()
+    for index, X, ner1, ner2, ner3, ner4,ner5, length in tqdm(train_dataloader):
+        # model.zero_grad()
         X = nn.utils.rnn.pad_sequence(X, batch_first=True).type(torch.LongTensor)
         X = X.cuda()
         length = length.cuda()
-        #ner = ner.type(torch.float).cuda()
+        # ner = ner.type(torch.float).cuda()
         mask_X = get_mask(X, length, is_cuda=True).cuda()
-        ner = nn.utils.rnn.pad_sequence(ner, batch_first=True).type(torch.LongTensor)
-        ner = ner.cuda()
+        ner1 = nn.utils.rnn.pad_sequence(ner1, batch_first=True).type(torch.LongTensor)
+        ner1 = ner1.cuda()
+        ner2 = nn.utils.rnn.pad_sequence(ner2, batch_first=True).type(torch.LongTensor)
+        ner2 = ner2.cuda()
+        ner5 = nn.utils.rnn.pad_sequence(ner5, batch_first=True).type(torch.LongTensor)
+        ner5 = ner5.cuda()
+        # ner3 = nn.utils.rnn.pad_sequence(ner3, batch_first=True).type(torch.LongTensor)
+        # ner3 = ner3.cuda()
+        # ner4 = nn.utils.rnn.pad_sequence(ner4, batch_first=True).type(torch.LongTensor)
+        # ner4 = ner4.cuda()
 
-        loss = model.cal_loss(X, mask_X, length, label=ner)
+        loss = model.cal_loss(X, mask_X, length, label1=ner1, label2=ner2, label3=ner3, label4=ner4, label5=ner5)
         loss.backward()
 
         #loss = loss_fn(pred, ner)

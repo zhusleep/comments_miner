@@ -16,8 +16,8 @@ import logging
 
 from sklearn.externals import joblib
 
-file_name = 'TRAIN/Train_reviews.csv'
-file_labels = 'TRAIN/Train_labels.csv'
+file_name = 'TRAIN/Train_laptop_reviews.csv'
+file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences = data_manager.read_nerlink(filename=file_name, filelabels=file_labels)
 print(len(sentences),sum([x[3] for x in sentences]))
 seed_torch(2019)

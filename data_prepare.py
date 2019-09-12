@@ -63,6 +63,7 @@ class DataManager(object):
                 token.append(0)
         return token
 
+
     def read_raw_data(self,filename,filelabels):
         train = pd.read_csv(filename)
         labels = pd.read_csv(filelabels)
@@ -180,12 +181,15 @@ class DataManager(object):
         ner_labels2 = []
         ner_labels3 = []
         ner_labels4 = []
+        ner_labels5 = []
+
         for index, row in self.train.iterrows():
             sentence.append(row['Reviews'])
             ner = np.array([0] * len(row['Reviews']))
             ner2 = np.array([0] * len(row['Reviews']))
             ner3 = np.array([0] * len(row['Reviews']))
             ner4 = np.array([0] * len(row['Reviews']))
+            ner5 = np.array([0] * len(row['Reviews']))
             for mention_ner in self.span[row['id']]:
                 #print(mention_ner, ner2)
                 #try:
@@ -195,12 +199,16 @@ class DataManager(object):
                 ner[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3], self.ner_list)
                 ner3[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3], self.ner_list3)
                 ner4[mention_ner[0]:mention_ner[1]] = self.BMESO(mention_ner[0:2], mention_ner[2], mention_ner[3], self.ner_list4)
+                ner5[mention_ner[0]:mention_ner[1]] = [self.cate_list.index(mention_ner[3])+1]*(mention_ner[1]-mention_ner[0])
+
             ner_labels.append(ner)
             ner_labels2.append(ner2)
             ner_labels3.append(ner3)
             ner_labels4.append(ner4)
+            ner_labels5.append(ner5)
+
         assert len(ner_labels) == len(sentence)
-        return sentence, list(zip(ner_labels, ner_labels2, ner_labels3, ner_labels4))
+        return sentence, list(zip(ner_labels, ner_labels2, ner_labels3, ner_labels4, ner_labels5))
 
     def read_nerlink(self, filename, filelabels):
         train, labels = self.read_raw_data(filename, filelabels)

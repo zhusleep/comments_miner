@@ -16,8 +16,8 @@ import logging
 
 from sklearn.externals import joblib
 
-file_name = 'TRAIN/Train_reviews.csv'
-file_labels = 'TRAIN/Train_labels.csv'
+file_name = 'TRAIN/Train_laptop_reviews.csv'
+file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences = data_manager.read_nerlink(filename=file_name, filelabels=file_labels)
 test_data = pd.read_pickle('result/ner_bert_result.pkl')
 test_data = test_data.reset_index().rename(columns={'index':'id'})

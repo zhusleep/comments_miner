@@ -1,0 +1,9 @@
+12-Sep-19 15:56:18 - Model name 'bert/ernie1/' not found in model shortcut name list (bert-base-uncased, bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, bert-base-multilingual-cased, bert-base-chinese, bert-base-german-cased, bert-large-uncased-whole-word-masking, bert-large-cased-whole-word-masking, bert-large-uncased-whole-word-masking-finetuned-squad, bert-large-cased-whole-word-masking-finetuned-squad, bert-base-cased-finetuned-mrpc). Assuming 'bert/ernie1/' is a path or url to a directory containing tokenizer files.
+12-Sep-19 15:56:18 - Didn't find file bert/ernie1/added_tokens.json. We won't load it.
+12-Sep-19 15:56:18 - Didn't find file bert/ernie1/special_tokens_map.json. We won't load it.
+12-Sep-19 15:56:18 - Didn't find file bert/ernie1/tokenizer_config.json. We won't load it.
+12-Sep-19 15:56:18 - loading file bert/ernie1/vocab.txt
+12-Sep-19 15:56:18 - loading file None
+12-Sep-19 15:56:18 - loading file None
+12-Sep-19 15:56:18 - loading file None
+12-Sep-19 15:56:18 - Model name 'bert/default' was not found in model name list (bert-base-uncased, bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, bert-base-multilingual-cased, bert-base-chinese, bert-base-german-cased, bert-large-uncased-whole-word-masking, bert-large-cased-whole-word-masking, bert-large-uncased-whole-word-masking-finetuned-squad, bert-large-cased-whole-word-masking-finetuned-squad, bert-base-cased-finetuned-mrpc). We assumed 'bert/default/config.json' was a path or url but couldn't find any file associated to this path or url.

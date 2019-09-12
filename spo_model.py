@@ -2,7 +2,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from pytorch_pretrained_bert.modeling import BertModel
+from pytorch_transformers import BertTokenizer, BertModel
 from torch.nn import init
 
 from torchcrf import CRF
@@ -519,7 +519,9 @@ class SPO_Model_Bert(nn.Module):
                  num_tags1=5,
                  num_tags2=5,
                  num_tags3=5,
-                 num_tags4=5
+                 num_tags4=5,
+                 num_tags5=5,
+                 pretrain_path=None
               ):
         super(SPO_Model_Bert, self).__init__()
         # self.word_embedding = nn.Embedding(vocab_size,
@@ -529,22 +531,7 @@ class SPO_Model_Bert(nn.Module):
         self.seq_dropout = seq_dropout
 
         self.dropout1d = nn.Dropout2d(self.seq_dropout)
-        #self.attention = SoftAttention()
-        #self.lstm_attention = Attention(768)
-        #self.gru_attention = Attention(encoder_size*2)
-        #
-        # self.mlp = nn.Sequential(
-        #     nn.BatchNorm1d(768),
-        #     nn.Dropout(p=dropout),
-        #     nn.Linear(in_features=768, out_features=64),
-        #     nn.Sigmoid()
-        # )
-        # self.mlp2 = nn.Sequential(
-        #     nn.BatchNorm1d(64+dim_num_feat),
-        #     nn.Dropout(p=dropout),
-        #     nn.Linear(in_features=64+dim_num_feat, out_features=50),
-        #     nn.Sigmoid()
-        # )
+
         bert_model = 'bert-base-chinese'
         self.bert = BertModel.from_pretrained(bert_model)
         self.use_layer = -1
@@ -557,6 +544,8 @@ class SPO_Model_Bert(nn.Module):
         self.NER2 = nn.Linear(768, num_tags2)
         self.NER3 = nn.Linear(768, num_tags3)
         self.NER4 = nn.Linear(768, num_tags4)
+        self.NER5 = nn.Linear(768, num_tags4)
+
         self.loss_linear1 = nn.Linear(1, 1)
 
         self.crf_model1 = CRF(num_tags=num_tags1, batch_first=True)
@@ -566,19 +555,21 @@ class SPO_Model_Bert(nn.Module):
 
         self.use_crf = True
 
-    def cal_loss(self,token_tensor,mask_X,length,label1=None,label2=None,label3=None,label4=None):
+    def cal_loss(self,token_tensor,mask_X,length,label1=None,label2=None,label3=None,label4=None,label5=None):
         # self.bert.eval()
         # with torch.no_grad():
-        bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None,
-                            output_all_encoded_layers=True)
+        bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None
+                            )
 
-        bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
+        #bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
         #bert_outputs = self.LSTM(bert_outputs, length)
         #X1 = self.hidden(bert_outputs)
         logits1 = self.NER1(bert_outputs)
         logits2 = self.NER2(bert_outputs)
-        logits3 = self.NER3(bert_outputs)
-        logits4 = self.NER4(bert_outputs)
+        logits5 = self.NER5(bert_outputs)
+
+        # logits3 = self.NER3(bert_outputs)
+        # logits4 = self.NER4(bert_outputs)
 
         if not self.use_crf:
             class_probabilities = F.softmax(logits, dim=2)
@@ -587,20 +578,23 @@ class SPO_Model_Bert(nn.Module):
         else:
             loss1 = -1 * self.crf_model1(logits1, label1, mask=mask_X)
             loss2 = -1 * self.crf_model2(logits2, label2, mask=mask_X)
-            loss3 = -1 * self.crf_model3(logits3, label3, mask=mask_X)
-            loss4 = -1 * self.crf_model4(logits4, label4, mask=mask_X)
+            # loss3 = -1 * self.crf_model3(logits3, label3, mask=mask_X)
+            # loss4 = -1 * self.crf_model4(logits4, label4, mask=mask_X)
             #loss = self.loss_lineart(torch.cat([loss1,loss2,loss3,loss4]))
-        return loss1+0.3*loss2
+
+            class_probabilities = F.softmax(logits5, dim=2)
+            loss5 = sequence_cross_entropy_with_logits(class_probabilities, label5, weights=mask_X,
+                                                      label_smoothing=False)
+        return loss1+0.3*loss2+5*loss5
 
     def forward(self, token_tensor, mask_X, length):
         batch_size = token_tensor.size()[0]
 
         self.bert.eval()
         with torch.no_grad():
-            bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None,
-                                        output_all_encoded_layers=True)
+            bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None)
 
-        bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
+        #bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
 
         #X1 = self.LSTM(bert_outputs, length)
         #X1 = self.hidden(bert_outputs)
@@ -790,10 +784,10 @@ class NerLinkModel(nn.Module):
             # self.bert.eval()
             # with torch.no_grad():
             bert_outputs, cls = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(),
-                                            token_type_ids=None,
-                                            output_all_encoded_layers=True)
+                                            token_type_ids=None
+                                            )
 
-            bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
+            # bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
             spans_contexts1 = self.span_extractor(bert_outputs, pos1)
             spans_contexts2 = self.span_extractor(bert_outputs, pos2)
             last_vector = torch.cat([spans_contexts1, spans_contexts2, numerical_f], dim=-1)
@@ -869,10 +863,10 @@ class NerLinkCateModel(nn.Module):
             # self.bert.eval()
             # with torch.no_grad():
             bert_outputs, cls = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(),
-                                            token_type_ids=None,
-                                            output_all_encoded_layers=True)
+                                            token_type_ids=None)
 
-            bert_outputs = torch.cat(bert_outputs[-1:], dim=-1)
+
+            #bert_outputs = torch.cat(bert_outputs[-1:], dim=-1)
             span_pool = self.attn_pool(bert_outputs, mask=mask)
             spans_contexts1 = self.span_extractor(bert_outputs, pos1)
             spans_contexts2 = self.span_extractor(bert_outputs, pos2)

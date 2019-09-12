@@ -1,0 +1,1 @@
+12-Sep-19 15:10:09 - Model name 'bert/wwm/vocab.txt' was not found in model name list (bert-base-uncased, bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, bert-base-multilingual-cased, bert-base-chinese). We assumed 'bert/wwm/vocab.txt' was a path or url but couldn't find any file associated to this path or url.

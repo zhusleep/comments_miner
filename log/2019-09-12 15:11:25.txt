@@ -1,0 +1,2 @@
+12-Sep-19 15:11:26 - loading vocabulary file bert/default/vocab.txt from cache at bert/default/vocab.txt
+12-Sep-19 15:11:26 - loading archive file bert/default from cache at bert/default
