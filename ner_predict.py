@@ -29,9 +29,9 @@ sentences, labels = data_manager.parseData(filename=file_namne, filelabels=file_
 dev_X = pd.read_csv('TRAIN/Test_reviews.csv')['Reviews']
 
 ## deal for bert
-train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
-dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
-train_ner = [[0]+list(temp)+[0]for temp in labels]
+# train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
+# dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
+# train_ner = [[0]+list(temp)+[0]for temp in labels]
 
 train_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in sentences]
 dev_X = [['[CLS]']+list(temp)+['[SEP]'] for temp in dev_X]
