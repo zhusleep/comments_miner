@@ -1,0 +1,30 @@
+19-Sep-19 10:56:04 - loading file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt from cache at /home/zhukaihua/.cache/torch/pytorch_transformers/8a0c070123c1f794c42a29c6904beb7c1b8715741e235bee04aca2c7636fc83f.9b42061518a39ca00b8b52059fd2bede8daa613f8a8671500e518a8c29de8c00
+19-Sep-19 10:56:05 - loading configuration file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-config.json from cache at /home/zhukaihua/.cache/torch/pytorch_transformers/8a3b1cfe5da58286e12a0f5d7d182b8d6eca88c08e26c332ee3817548cf7e60a.0c16faba8be66db3f02805c912e4cf94d3c9cffc1f12fa1a39906f9270f76d33
+19-Sep-19 10:56:05 - Model config {
+  "attention_probs_dropout_prob": 0.1,
+  "directionality": "bidi",
+  "finetuning_task": null,
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "layer_norm_eps": 1e-12,
+  "max_position_embeddings": 512,
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "num_labels": 2,
+  "output_attentions": false,
+  "output_hidden_states": false,
+  "pooler_fc_size": 768,
+  "pooler_num_attention_heads": 12,
+  "pooler_num_fc_layers": 3,
+  "pooler_size_per_head": 128,
+  "pooler_type": "first_token_transform",
+  "pruned_heads": {},
+  "torchscript": false,
+  "type_vocab_size": 2,
+  "vocab_size": 21128
+}
+
+19-Sep-19 10:56:06 - loading weights file https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin from cache at /home/zhukaihua/.cache/torch/pytorch_transformers/b1b5e295889f2d0979ede9a78ad9cb5dc6a0e25ab7f9417b315f0a2c22f4683d.929717ca66a3ba9eb9ec2f85973c6398c54c38a4faa464636a491d7a705f7eb6

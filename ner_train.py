@@ -45,9 +45,9 @@ round = 0
 dev_all = []
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     ## deal for bert
-    # if round<3:
-    #     round+=1
-    #     continue
+    if round<4:
+        round+=1
+        continue
 
     train_X = [sentences[i] for i in train_index]
     train_ner = [labels[i] for i in train_index]
@@ -121,17 +121,21 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             mask_X = get_mask(X, length, is_cuda=True).cuda()
             ner1 = nn.utils.rnn.pad_sequence(ner1, batch_first=True).type(torch.LongTensor)
             ner1 = ner1.cuda()
-            ner2 = nn.utils.rnn.pad_sequence(ner2, batch_first=True).type(torch.LongTensor)
-            ner2 = ner2.cuda()
-            ner5 = nn.utils.rnn.pad_sequence(ner5, batch_first=True).type(torch.LongTensor)
-            ner5 = ner5.cuda()
+            # ner2 = nn.utils.rnn.pad_sequence(ner2, batch_first=True).type(torch.LongTensor)
+            # ner2 = ner2.cuda()
+            # ner5 = nn.utils.rnn.pad_sequence(ner5, batch_first=True).type(torch.LongTensor)
+            # ner5 = ner5.cuda()
             # ner3 = nn.utils.rnn.pad_sequence(ner3, batch_first=True).type(torch.LongTensor)
             # ner3 = ner3.cuda()
             # ner4 = nn.utils.rnn.pad_sequence(ner4, batch_first=True).type(torch.LongTensor)
             # ner4 = ner4.cuda()
 
             loss = model.cal_loss(X, mask_X, length, label1=ner1, label2=ner2, label3=ner3, label4=ner4, label5=ner5)
+
+            #print('before', model.NER1.weight.grad)
+            #print(loss)
             loss.backward()
+            #print('after', model.NER1.weight.grad)
 
             #loss = loss_fn(pred, ner)
             nn.utils.clip_grad_norm_(model.parameters(), clip)
@@ -219,3 +223,5 @@ dev_all.to_csv('result/analysis.csv', sep='\t')
 # ernie1.0 0.845 0.818 0.844 0.833 0.836
 # 0.849 0.8240.848 0.837
 #  0.853 0.837 0.863 0.851 0.837
+# crf 0.848 0.855 0.857 0.855 0.833
+# ernie 0.851,0.852,0.855,0.853 0.840

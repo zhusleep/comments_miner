@@ -131,9 +131,12 @@ for index, X, pos1, pos2, length, numerical_f in tqdm(valid_dataloader):
 
 pred_set = np.concatenate(pred_set, axis=0)
 
+for i in range(len(pred_set)):
+    if valid_dataset.type_error[i] == 0:
+        pred_set[i, 0] = 0
+
 AO_link = {}
-# thre = cal_threshold(pred_set)
-thre = 0.002
+thre = cal_threshold(pred_set)
 true_link = 0
 for index, item in enumerate(dev_X):
 
@@ -144,24 +147,35 @@ for index, item in enumerate(dev_X):
         else:
             AO_link[item[5]].append((item[1],item[2]))
 print('old true link', true_link)
-
-for i in range(len(pred_set)):
-    if valid_dataset.type_error[i] == 0:
-        pred_set[i, 0] = 0
-
-AO_link = {}
+# thre = 0.002
+# true_link = 0
+# for index, item in enumerate(dev_X):
+#
+#     if pred_set[index,0]>=thre:
+#         true_link +=1
+#         if item[5] not in AO_link:
+#             AO_link[item[5]] = [(item[1], item[2])] #
+#         else:
+#             AO_link[item[5]].append((item[1],item[2]))
+# print('old true link', true_link)
+#
+# for i in range(len(pred_set)):
+#     if valid_dataset.type_error[i] == 0:
+#         pred_set[i, 0] = 0
+#
+# AO_link = {}
 # thre = cal_threshold(pred_set)
-thre = 0.002
-true_link = 0
-for index, item in enumerate(dev_X):
-
-    if pred_set[index,0]>=thre:
-        true_link +=1
-        if item[5] not in AO_link:
-            AO_link[item[5]] = [(item[1], item[2])]
-        else:
-            AO_link[item[5]].append((item[1],item[2]))
-print('new true link', true_link)
+# thre = 0.002
+# true_link = 0
+# for index, item in enumerate(dev_X):
+#
+#     if pred_set[index,0]>=thre:
+#         true_link +=1
+#         if item[5] not in AO_link:
+#             AO_link[item[5]] = [(item[1], item[2])]
+#         else:
+#             AO_link[item[5]].append((item[1],item[2]))
+# print('new true link', true_link)
 
 
 def generate_result(pos, id):

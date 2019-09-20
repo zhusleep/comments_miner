@@ -544,7 +544,7 @@ class SPO_Model_Bert(nn.Module):
         self.NER2 = nn.Linear(768, num_tags2)
         self.NER3 = nn.Linear(768, num_tags3)
         self.NER4 = nn.Linear(768, num_tags4)
-        self.NER5 = nn.Linear(768, num_tags4)
+        self.NER5 = nn.Linear(768, num_tags5)
 
         self.loss_linear1 = nn.Linear(1, 1)
 
@@ -558,34 +558,44 @@ class SPO_Model_Bert(nn.Module):
     def cal_loss(self,token_tensor,mask_X,length,label1=None,label2=None,label3=None,label4=None,label5=None):
         # self.bert.eval()
         # with torch.no_grad():
+
         bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None
                             )
-
+        #b2 = bert_outputs[:,0,:].unsqueeze(1).expand(bert_outputs.size()[0],bert_outputs.size()[1],bert_outputs.size()[2])
+        #bert_outputs = torch.cat([bert_outputs,b2],dim=-1)
         #bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
         #bert_outputs = self.LSTM(bert_outputs, length)
         #X1 = self.hidden(bert_outputs)
         logits1 = self.NER1(bert_outputs)
-        logits2 = self.NER2(bert_outputs)
-        logits5 = self.NER5(bert_outputs)
+        #logits2 = self.NER2(bert_outputs)
+        #logits5 = self.NER5(bert_outputs)
 
         # logits3 = self.NER3(bert_outputs)
         # logits4 = self.NER4(bert_outputs)
 
         if not self.use_crf:
-            class_probabilities = F.softmax(logits, dim=2)
-            loss = sequence_cross_entropy_with_logits(class_probabilities, label, weights=mask_X,
+            #class_probabilities1 = F.softmax(logits1, dim=2)
+            #print(class_probabilities1)
+            loss1 = sequence_cross_entropy_with_logits(logits1, label1, weights=mask_X,
                                                       label_smoothing=False)
+            '''
+            loss2 = sequence_cross_entropy_with_logits(logits2, label2, weights=mask_X,
+                                                       label_smoothing=False)
+            #class_probabilities5 = F.softmax(logits5, dim=2)
+            loss5 = sequence_cross_entropy_with_logits(logits5, label5, weights=mask_X,
+                                                       label_smoothing=False)
+            '''
+
         else:
             loss1 = -1 * self.crf_model1(logits1, label1, mask=mask_X)
-            loss2 = -1 * self.crf_model2(logits2, label2, mask=mask_X)
+            #loss2 = -1 * self.crf_model2(logits2, label2, mask=mask_X)
             # loss3 = -1 * self.crf_model3(logits3, label3, mask=mask_X)
             # loss4 = -1 * self.crf_model4(logits4, label4, mask=mask_X)
             #loss = self.loss_lineart(torch.cat([loss1,loss2,loss3,loss4]))
-
-            class_probabilities = F.softmax(logits5, dim=2)
-            loss5 = sequence_cross_entropy_with_logits(class_probabilities, label5, weights=mask_X,
-                                                      label_smoothing=False)
-        return loss1+0.3*loss2+5*loss5
+            #
+            # loss5 = sequence_cross_entropy_with_logits(logits5, label5, weights=mask_X,
+            #                                           label_smoothing=False,average='token')
+        return loss1#+0.3*loss2+5*loss5
 
     def forward(self, token_tensor, mask_X, length):
         batch_size = token_tensor.size()[0]
@@ -593,7 +603,9 @@ class SPO_Model_Bert(nn.Module):
         self.bert.eval()
         with torch.no_grad():
             bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None)
-
+        #b2 = bert_outputs[:, 0, :].unsqueeze(1).expand(bert_outputs.size()[0], bert_outputs.size()[1],
+                                                       #bert_outputs.size()[2])
+        #bert_outputs = torch.cat([bert_outputs, b2], dim=-1)
         #bert_outputs = torch.cat(bert_outputs[self.use_layer:], dim=-1)
 
         #X1 = self.LSTM(bert_outputs, length)

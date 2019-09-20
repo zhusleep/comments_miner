@@ -19,6 +19,9 @@ from sklearn.externals import joblib
 file_name = 'TRAIN/Train_laptop_reviews.csv'
 file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences = data_manager.read_nerlink(filename=file_name, filelabels=file_labels)
+file_name = 'TRAIN/Train_makeup_reviews.csv'
+file_labels = 'TRAIN/Train_makeup_labels.csv'
+sentences2 = data_manager.read_nerlink(filename=file_name, filelabels=file_labels)
 print(len(sentences),sum([x[3] for x in sentences]))
 seed_torch(2019)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
@@ -26,12 +29,14 @@ pred_vector = []
 round = 0
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     # print(round)
-    # if round<1:
-    #     round +=1
-    #     continue
+    if round<2:
+        round +=1
+        continue
 
-    train_X = [sentences[i] for i in train_index]
+    train_X = [sentences[i] for i in train_index]+sentences2
     dev_X = [sentences[i] for i in test_index]
+    #train_X = sentences2
+    #dev_X = sentences
     BERT_MODEL = 'bert-base-chinese'
     CASED = False
     t = BertTokenizer.from_pretrained(
@@ -165,87 +170,6 @@ result.to_pickle('result/ner_link_part.pkl')
 # part1 0.916/0.929/0.945/0.922
 # rewrite metric
 """
-real acc 0.990909,recall 0.955331,f1 0.972794
-round 0 epoch 0 train loss　0.058550, val loss 0.054279  acc 0.965190, recall0.866477, f1 0.913174
-100%|██████████| 283/283 [00:57<00:00,  5.08it/s]
-阈值 [0.6068619]
-real acc 0.987645,recall 0.955458,f1 0.971285
-round 0 epoch 1 train loss　0.054317, val loss 0.053998  acc 0.953988, recall0.883523, f1 0.917404
-100%|██████████| 283/283 [01:02<00:00,  4.84it/s]
-阈值 [0.5062354]
-real acc 0.983711,recall 0.962390,f1 0.972934
-round 0 epoch 2 train loss　0.053659, val loss 0.053500  acc 0.942363, recall0.928977, f1 0.935622
-100%|██████████| 283/283 [01:04<00:00,  4.24it/s]
-阈值 [0.5831965]
-real acc 0.990248,recall 0.970900,f1 0.980479
-round 0 epoch 3 train loss　0.053159, val loss 0.053255  acc 0.964497, recall0.926136, f1 0.944928
-100%|██████████| 283/283 [01:03<00:00,  4.53it/s]
-阈值 [0.5311908]
-  0%|          | 0/283 [00:00<?, ?it/s]real acc 0.984130,recall 0.938853,f1 0.960958
-round 1 epoch 0 train loss　0.058787, val loss 0.055162  acc 0.939683, recall0.870588, f1 0.903817
-100%|██████████| 283/283 [01:04<00:00,  4.78it/s]
-阈值 [0.5054035]
-real acc 0.984468,recall 0.959570,f1 0.971859
-round 1 epoch 1 train loss　0.053797, val loss 0.054021  acc 0.944282, recall0.947059, f1 0.945668
-100%|██████████| 283/283 [01:04<00:00,  4.69it/s]
-阈值 [0.5358536]
-  0%|          | 0/283 [00:00<?, ?it/s]real acc 0.990208,recall 0.966916,f1 0.978424
-round 1 epoch 2 train loss　0.052658, val loss 0.053273  acc 0.963964, recall0.944118, f1 0.953938
-100%|██████████| 283/283 [01:05<00:00,  4.78it/s]
-阈值 [0.55167454]
-real acc 0.991035,recall 0.968876,f1 0.979830
-round 1 epoch 3 train loss　0.052076, val loss 0.053256  acc 0.966967, recall0.947059, f1 0.956909
-100%|██████████| 283/283 [01:04<00:00,  4.89it/s]
-阈值 [0.516608]
-real acc 0.983386,recall 0.943267,f1 0.962909
-round 2 epoch 0 train loss　0.058200, val loss 0.055016  acc 0.938080, recall0.878261, f1 0.907186
-100%|██████████| 283/283 [01:04<00:00,  4.51it/s]
-阈值 [0.4958054]
-  0%|          | 0/283 [00:00<?, ?it/s]real acc 0.985291,recall 0.960733,f1 0.972857
-round 2 epoch 1 train loss　0.054450, val loss 0.054036  acc 0.947059, recall0.933333, f1 0.940146
-100%|██████████| 283/283 [01:04<00:00,  4.67it/s]
-阈值 [0.52261376]
-  0%|          | 0/283 [00:00<?, ?it/s]real acc 0.986203,recall 0.968271,f1 0.977155
-round 2 epoch 2 train loss　0.053067, val loss 0.053375  acc 0.951009, recall0.956522, f1 0.953757
-100%|██████████| 283/283 [01:04<00:00,  4.68it/s]
-阈值 [0.57263356]
-real acc 0.991093,recall 0.975251,f1 0.983108
-round 2 epoch 3 train loss　0.052478, val loss 0.053031  acc 0.967742, recall0.956522, f1 0.962099
-100%|██████████| 283/283 [01:04<00:00,  4.73it/s]
-阈值 [0.60543007]
-real acc 0.987417,recall 0.937928,f1 0.962037
-round 3 epoch 0 train loss　0.057991, val loss 0.055442  acc 0.950658, recall0.873112, f1 0.910236
-100%|██████████| 283/283 [01:04<00:00,  4.71it/s]
-阈值 [0.49738282]
-real acc 0.988426,recall 0.952637,f1 0.970202
-round 3 epoch 1 train loss　0.053914, val loss 0.054387  acc 0.956250, recall0.924471, f1 0.940092
-100%|██████████| 283/283 [01:04<00:00,  4.35it/s]
-阈值 [0.5123158]
-real acc 0.991725,recall 0.954900,f1 0.972964
-round 3 epoch 2 train loss　0.052848, val loss 0.054274  acc 0.968051, recall0.915408, f1 0.940994
-100%|██████████| 283/283 [01:04<00:00,  4.38it/s]
-阈值 [0.51536024]
-real acc 0.991759,recall 0.958884,f1 0.975045
-round 3 epoch 3 train loss　0.052253, val loss 0.054048  acc 0.968553, recall0.930514, f1 0.949153
-100%|██████████| 283/283 [01:04<00:00,  4.70it/s]
-阈值 [0.6456892]
-real acc 0.992610,recall 0.963235,f1 0.977702
-round 4 epoch 0 train loss　0.057503, val loss 0.053785  acc 0.971963, recall0.888889, f1 0.928571
-100%|██████████| 283/283 [01:04<00:00,  4.59it/s]
-阈值 [0.67893314]
-real acc 0.990287,recall 0.974884,f1 0.982525
-round 4 epoch 1 train loss　0.053379, val loss 0.053016  acc 0.965015, recall0.943020, f1 0.953890
-100%|██████████| 283/283 [01:04<00:00,  4.84it/s]
-阈值 [0.5661336]
-  0%|          | 0/283 [00:00<?, ?it/s]real acc 0.997576,recall 0.983761,f1 0.990620
-round 4 epoch 2 train loss　0.052352, val loss 0.052467  acc 0.990964, recall0.937322, f1 0.963397
-100%|██████████| 283/283 [01:04<00:00,  4.55it/s]
-阈值 [0.4985642]
-real acc 0.992724,recall 0.978375,f1 0.985497
-round 4 epoch 3 train loss　0.052078, val loss 0.052527  acc 0.973529, recall0.943020, f1 0.958032
-"""
-
-"""
 2653 1653
 100%|██████████| 213/213 [00:41<00:00,  5.43it/s]
 阈值 [0.5049927]
@@ -264,3 +188,7 @@ round 0 epoch 2 train loss　0.046908, val loss 0.047983  acc 0.990712, recall0.
 real acc 0.997562,recall 0.978183,f1 0.987778
 round 0 epoch 3 train loss　0.046647, val loss 0.047886  acc 0.990769, recall0.969880, f1 0.980213
 """
+# default 五折 0.962 0.969 0.980 0.977 0.978
+# add makeup*5 五折　0.985 0.980 0.982 0.987 0.985
+# add makeup*1 五折 0.978 * 0.982 0.987
+

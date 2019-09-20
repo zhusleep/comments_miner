@@ -20,6 +20,10 @@ file_name = 'TRAIN/Train_laptop_reviews.csv'
 file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
 print(len(sentences))
+file_name = 'TRAIN/Train_reviews.csv'
+file_labels = 'TRAIN/Train_labels.csv'
+sentences2 = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
+
 seed_torch(2019)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
@@ -36,7 +40,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     # if round<2:
     #     round+=1
     #     continue
-    train_X = [sentences[i] for i in train_index]
+    train_X = [sentences[i] for i in train_index]+sentences2
     dev_X = [sentences[i] for i in test_index]
     BERT_MODEL = 'bert-base-chinese'
     CASED = False
@@ -148,20 +152,6 @@ result['label'] = [cate_list[x[id_label]] for x in dev_X]
 result['predict'] = [cate_list[x] for x in top_class]
 result.to_pickle('result/classify_%s.pkl' % name)
 
-# 0.954
-# 0.952,0.951,0.9495,0.946
-# 0.9457,0.9517,0.95177 epoch==2 category drop cls
-# part1 0.935 0.951 loss =  0.11
-# part0 0.955 0.948 loss = 0.104
-
-# polar
-# 0.9668,0.960,0.9668 || 0.97,0.9615
-# #0.970,0.975 epoch==2 0.967,0.979 keep pos2
-
-# attn pool warmup cate
-# part0 0.9577, 0.9593
-
-# concat warmup cate bat=10
-# part0 0.960, 0.957 || 0.960,0.955
-# part1 0.960,0.960 || bat==3 0.963,0.969
+# 800 五折　0.983/0.992/0.987 n
+# 800 +makeup 0.989/0.989/0.987
 
