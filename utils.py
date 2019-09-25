@@ -327,7 +327,8 @@ def get_threshold(predict, label, num_feature=1):
     acc_real = hit_real/m_real
     recall_real = hit_real/n_real
     f1_real = 2*acc_real*recall_real/(acc_real+recall_real)
-    print('real acc %f,recall %f,f1 %f'%(acc_real,recall_real,f1_real))
+    print(INFO)
+    # print('real acc %f,recall %f,f1 %f'%(acc_real,recall_real,f1_real))
     return INFO, thre_list
 
 

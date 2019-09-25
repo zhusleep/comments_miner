@@ -235,9 +235,12 @@ class DataManager(object):
         for id in span:
             for index, item in enumerate(span[id]):
                 if item[2] == 'A':
-                    for other_index in [index-2,index-1,index+1,index+2]:
-                        if other_index>=0 and other_index<=len(span[id])-1 and span[id][other_index][2] != 'A':# and span[id][other_index][3]==span[id][index][3]:
+                    for other_index in [index-2,index-1,index+1, index+2]:
+                        if other_index>=0 and other_index<=len(span[id])-1 and span[id][other_index][2] != 'A' :#and span[id][other_index][3]==span[id][index][3]:
                             [a, b] = sorted([index, other_index])
+                            # if b-a == 2 and span[id][b][3]!=span[id][a+1][3]:
+                            #     continue
+
                             sen = idToText[id-1]
                             if (id, span[id][a], span[id][b]) in AO_connect:
                                 training.append((sen, span[id][a], span[id][b],1,abs(other_index-index)-1))

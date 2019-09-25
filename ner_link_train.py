@@ -27,13 +27,14 @@ seed_torch(2019)
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
 round = 0
+#sentences = sentences2
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     # print(round)
-    if round<2:
-        round +=1
-        continue
+    # if round<2:
+    #     round +=1
+    #     continue
 
-    train_X = [sentences[i] for i in train_index]+sentences2
+    train_X = [sentences[i] for i in train_index]#+sentences2
     dev_X = [sentences[i] for i in test_index]
     #train_X = sentences2
     #dev_X = sentences
@@ -52,9 +53,9 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
                                 pos1=[x[1] for x in dev_X], pos2=[x[2] for x in dev_X],
                                 label=[x[3] for x in dev_X], use_bert=True, gap=[x[4] for x in dev_X])
 
-    #print(valid_dataset.type_error)
-    train_batch_size = 10
-    valid_batch_size = 10
+    # print(valid_dataset.type_error)
+    train_batch_size = 20
+    valid_batch_size = 20
     model = NerLinkModel(vocab_size=None, init_embedding=None, encoder_size=128, dropout=0.2, use_bert=True)
     use_cuda = True
     if use_cuda:
@@ -102,6 +103,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
             # Clip gradients: gradients are modified in place
             # nn.utils.clip_grad_norm_(model.parameters(), clip)
             train_loss += loss.item()
+            #break
         train_loss = train_loss/len(train_X)
 
         model.eval()
@@ -137,7 +139,12 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         # equals = top_class == label_set
         # accuracy = np.mean(equals)
         # print('acc', accuracy)
+        k = np.array(valid_dataset.gap)
+
+        INFO_THRE, thre_list = get_threshold(pred_set[k == 1], label_set[k == 1])
+        INFO_THRE, thre_list = get_threshold(pred_set[k == 0], label_set[k == 0])
         INFO_THRE, thre_list = get_threshold(pred_set, label_set)
+
         print('round', round, 'epoch', epoch,'train loss　%f, val loss %f ' % (train_loss, valid_loss), INFO_THRE)
 
     #torch.save(model.state_dict(), 'model_ner/ner_link_round_%s.pth' % round)
@@ -191,4 +198,5 @@ round 0 epoch 3 train loss　0.046647, val loss 0.047886  acc 0.990769, recall0.
 # default 五折 0.962 0.969 0.980 0.977 0.978
 # add makeup*5 五折　0.985 0.980 0.982 0.987 0.985
 # add makeup*1 五折 0.978 * 0.982 0.987
+# nearest combination 0.998 0.996
 

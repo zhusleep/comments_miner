@@ -416,23 +416,29 @@ class NERLINK(Dataset):
         if not use_bert:
             self.X = tokenizer.transform(X)        # X = pad_sequences(X, maxlen=198)
         else:
-            self.X = self.deal_for_bert(X, self.tokenizer)
+            self.X = self.deal_for_bert(X, self.tokenizer, pos1, pos2)
         self.pos1 = pos1
         self.pos2 = pos2
         self.type_error = [1 if a[3]==b[3] else 0 for a,b in zip(self.pos1,self.pos2)]
         self.length = [len(sen) for sen in self.X]
 
-    def deal_for_bert(self, x, t):
+    def deal_for_bert(self, x, t, pos1, pos2):
         bert_tokens = []
-        for item in x:
+        for index, item in enumerate(x):
             temp = []
             for w in item:
                 if w in self.tokenizer.vocab:
                     temp.append(w)
                 else:
                     temp.append('[UNK]')
-
+            # 在ner周围添加unused标记
+            # temp.insert(pos1[index][0]+1, '[unused1]')
+            # temp.insert(pos1[index][1]+3, '[unused2]')
+            # temp.insert(pos2[index][0]+3, '[unused3]')
+            # temp.insert(pos2[index][1]+5, '[unused4]')
             # sen = t.tokenize(''.join(item))
+            # 截取中间片段
+            temp = [temp[0]]+temp[pos1[index][0]+1:pos2[index][1]+2]+[temp[-1]]
             indexed_tokens = t.convert_tokens_to_ids(temp)
             bert_tokens.append(indexed_tokens)
         return bert_tokens
@@ -475,8 +481,10 @@ class NERLINK(Dataset):
     def __getitem__(self, index):
         sentence = torch.tensor(self.X[index])
         numerical_f = self.numerical_f(self.raw_X[index], self.pos1[index], self.pos2[index], index)
-        pos1 = [self.pos1[index][0]+1, self.pos1[index][1]+1]
-        pos2 = [self.pos2[index][0]+1, self.pos2[index][1]+1]
+        # pos1 = [self.pos1[index][0]+2, self.pos1[index][1]+2]
+        # pos2 = [self.pos2[index][0]+4, self.pos2[index][1]+4]
+        pos1 = [1, 1+self.pos1[index][1]-self.pos1[index][0]]
+        pos2 = [len(sentence)-2-self.pos2[index][1]+self.pos2[index][0], len(sentence)-2]
         if self.label is not None:
             label = self.label[index]
         else:

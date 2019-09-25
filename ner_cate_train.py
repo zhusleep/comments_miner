@@ -19,6 +19,10 @@ from sklearn.externals import joblib
 file_name = 'TRAIN/Train_laptop_reviews.csv'
 file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
+file_name = 'TRAIN/Train_makeup_reviews.csv'
+file_labels = 'TRAIN/Train_makeup_labels.csv'
+sentences2 = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
+sentences += sentences2
 print(len(sentences))
 file_name = 'TRAIN/Train_reviews.csv'
 file_labels = 'TRAIN/Train_labels.csv'
@@ -30,10 +34,10 @@ pred_vector = []
 round = 0
 name = 'polarity'
 if name =='polarity':
-    id_label=4
+    id_label = 4
     cate_list = data_manager.polarity
 else:
-    id_label=3
+    id_label = 3
     cate_list = data_manager.category
 
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
@@ -143,7 +147,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     # logging.info(INFO)
     # INFO = 'epoch %d, train loss %f, valid loss %f' % (epoch, train_loss, valid_loss)
     # logging.info(INFO + '\t' + INFO_THRE)
-    #break
+    break
 result = pd.DataFrame()
 result['text'] = [x[0] for x in dev_X]
 result['pos1'] = [x[1] for x in dev_X]

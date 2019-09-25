@@ -18,10 +18,10 @@ from sklearn.externals import joblib
 file_name = 'TRAIN/Train_laptop_reviews.csv'
 file_labels = 'TRAIN/Train_laptop_labels.csv'
 sentences = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
-file_name = 'TRAIN/Train_reviews.csv'
-file_labels = 'TRAIN/Train_labels.csv'
+file_name = 'TRAIN/Train_makeup_reviews.csv'
+file_labels = 'TRAIN/Train_makeup_labels.csv'
 sentences2 = data_manager.read_ner_cate(filename=file_name, filelabels=file_labels)
-sentences #+=sentences2
+sentences +=sentences2
 
 dev_X = []
 test_data = pd.read_pickle('result/ner_link.pkl')
@@ -114,7 +114,10 @@ for epoch in range(epochs):
         # Clip gradients: gradients are modified in place
         # nn.utils.clip_grad_norm_(model.parameters(), clip)
         train_loss += loss.item()
+        break
     train_loss = train_loss/len(train_X)
+#torch.save(model.state_dict(), 'model_ner/ner_cate.pth')
+model.load_state_dict(torch.load('model_ner/ner_cate.pth', map_location=torch.device('cuda')))
 
 model.eval()
 valid_loss = 0

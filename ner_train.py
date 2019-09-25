@@ -37,7 +37,7 @@ VOCAB_PATH = Path('bert/%s' % weight_type)
 PRETRAIN_PATH = Path('bert/%s' % weight_type)
 
 print(PRETRAIN_PATH)
-#t = BertTokenizer.from_pretrained('bert/ernie1/')
+# t = BertTokenizer.from_pretrained('bert/ernie1/')
 print('end')
 kfold = KFold(n_splits=5, shuffle=False, random_state=2019)
 pred_vector = []
@@ -45,8 +45,8 @@ round = 0
 dev_all = []
 for train_index, test_index in kfold.split(np.zeros(len(sentences))):
     ## deal for bert
-    if round<4:
-        round+=1
+    if round < 4:
+        round += 1
         continue
 
     train_X = [sentences[i] for i in train_index]
@@ -180,7 +180,7 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
                 label_set.append(item.numpy())
             valid_loss += loss.item()
         valid_loss = valid_loss/len(dev_X)
-        del X,ner1,ner2,mask_X
+        del X, ner1, ner2, mask_X
         gc.collect()
         acc,recall,f1,pred_result,label_result = calc_f1(pred_set, label_set, data_manager)
         INFO = 'epoch %d, train loss %f, valid loss %f, acc %f, recall %f, f1 %f ' % (epoch, train_loss, valid_loss,acc,recall,f1)
