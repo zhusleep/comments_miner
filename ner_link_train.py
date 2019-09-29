@@ -132,9 +132,9 @@ for train_index, test_index in kfold.split(np.zeros(len(sentences))):
         valid_loss = valid_loss / len(dev_X)
         pred_set = np.concatenate(pred_set, axis=0)
         label_set = np.concatenate(label_set, axis=0)
-        for i in range(len(pred_set)):
-            if valid_dataset.type_error[i]==0:
-                pred_set[i,0] = 0
+        # for i in range(len(pred_set)):
+        #     if valid_dataset.type_error[i]==0:
+        #         pred_set[i,0] = 0
         # top_class = np.argmax(pred_set, axis=1)
         # equals = top_class == label_set
         # accuracy = np.mean(equals)

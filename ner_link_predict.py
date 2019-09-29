@@ -28,7 +28,7 @@ test_data = pd.read_pickle('result/ner_bert_result.pkl')
 test_data = test_data.reset_index().rename(columns={'index':'id'})
 test_data['text'] = test_data['text'].apply(lambda x:''.join(x[1:-1]))
 test_data['pos'] = test_data['pos'].apply(lambda x:[(item[0]-1,item[1]-1,item[2][1],item[2][2:]) for item in x])
-test_xu = pickle.load(open('test_data_a_o.pkl', 'rb'))
+test_xu = pickle.load(open('test_data_a_o_927.pkl', 'rb'))
 text_df = []
 pos_df = []
 for item in test_xu:
@@ -174,9 +174,9 @@ for index, item in enumerate(dev_X):
     if pred_set[index,0]>=thre:
         true_link +=1
         if item[5] not in AO_link:
-            AO_link[item[5]] = [(item[1], item[2])]
+            AO_link[item[5]] = [(item[1], item[2], pred_set[index])]
         else:
-            AO_link[item[5]].append((item[1],item[2]))
+            AO_link[item[5]].append((item[1],item[2], pred_set[index]))
 print('old true link', true_link)
 
 

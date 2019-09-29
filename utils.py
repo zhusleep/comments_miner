@@ -296,7 +296,7 @@ def get_threshold(predict, label, num_feature=1):
     # pred_list = sorted(list(predict[:, 0].flatten()), reverse=False)
     # k = int(len(pred_list) * 0.09)
     # thre_list = [pred_list[k]]
-    thre_list = [0.004]
+    #thre_list = [0.004]
     thre_list = np.array(thre_list).reshape(1, -1).repeat(count, axis=0)
     result = np.where(predict < thre_list, 0, 1)
     result_f = result.flatten()
@@ -321,12 +321,12 @@ def get_threshold(predict, label, num_feature=1):
     recall = hit/sum(label_f)
     f1 = 2*acc*recall/(acc+recall)
     INFO = 'acc %f, recall%f, f1% f' % (acc, recall, f1)
-    hit_real = hit+910-(sum(result_f)-hit)*2*0.73
-    m_real = sum(result_f)+910-(sum(result_f)-hit)*2*0.73
-    n_real = 1255
-    acc_real = hit_real/m_real
-    recall_real = hit_real/n_real
-    f1_real = 2*acc_real*recall_real/(acc_real+recall_real)
+    # hit_real = hit+910-(sum(result_f)-hit)*2*0.73
+    # m_real = sum(result_f)+910-(sum(result_f)-hit)*2*0.73
+    # n_real = 1255
+    # acc_real = hit_real/m_real
+    # recall_real = hit_real/n_real
+    # f1_real = 2*acc_real*recall_real/(acc_real+recall_real)
     print(INFO)
     # print('real acc %f,recall %f,f1 %f'%(acc_real,recall_real,f1_real))
     return INFO, thre_list

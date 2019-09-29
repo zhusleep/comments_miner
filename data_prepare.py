@@ -1,7 +1,7 @@
 #-*-coding:utf-8-*-
 import pandas as pd
 import numpy as np
-
+import re
 
 class DataManager(object):
     def __init__(self):
@@ -209,6 +209,46 @@ class DataManager(object):
 
         assert len(ner_labels) == len(sentence)
         return sentence, list(zip(ner_labels, ner_labels2, ner_labels3, ner_labels4, ner_labels5))
+
+    def parseData_nerornot(self, filename, filelabels):
+        self.read_ner_basic_info(filename, filelabels)
+        sentence = []
+        labels = []
+        spliter = set(['，', '！', ' ', '?', '。', '\n', '～',''])
+
+        def split_sentence(s):
+            # s,(0,4)
+            new_s = []
+            temp = []
+            # re.split(r'[，！?。～\s]\s*', line)
+            temp.append(0)
+            segment = ''
+            for index, item in enumerate(s):
+                segment += item
+                if item in spliter:
+                    temp.append(index)
+                    assert len(temp)==2
+                    new_s.append([segment, temp])
+                    segment = ''
+                    temp = [index+1]
+            if index != len(s):
+                temp.append(len(s)-1)
+                new_s.append([segment, temp])
+            return new_s
+
+        for index, row in self.train.iterrows():
+            for item,spanindex in split_sentence(row['Reviews']):
+                if item in spliter:continue
+                sentence.append(item)
+                for mention_ner in self.span[row['id']]:
+                    if spanindex[0]<=mention_ner[0] and spanindex[1]>=mention_ner[1]-1:
+                        labels.append(1)
+                        break
+                if len(sentence)!=len(labels):
+                    labels.append(0)
+
+        assert len(labels) == len(sentence)
+        return sentence, labels
 
     def read_nerlink(self, filename, filelabels):
         train, labels = self.read_raw_data(filename, filelabels)

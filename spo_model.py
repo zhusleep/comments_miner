@@ -618,6 +618,57 @@ class SPO_Model_Bert(nn.Module):
         return pred
 
 
+class NerOrNot(nn.Module):
+    def __init__(self,
+                 encoder_size=64,
+                 dim_num_feat=0,
+                 dropout=0.5,
+                 seq_dropout=0.1,
+                 pretrain_path=None
+                ):
+        super(NerOrNot, self).__init__()
+        # self.word_embedding = nn.Embedding(vocab_size,
+        #                                    word_embed_size,
+        #                                    padding_idx=0)
+        # self.pos_embedding = nn.Embedding(pos_embed_size, pos_dim, padding_idx=0)
+        self.seq_dropout = seq_dropout
+
+        self.dropout1d = nn.Dropout2d(self.seq_dropout)
+
+        bert_model = 'bert-base-chinese'
+        self.bert = BertModel.from_pretrained(bert_model)
+        self.use_layer = -1
+        self.LSTM = LSTMEncoder(embed_size=768,
+                                encoder_size=encoder_size,
+                                bidirectional=True)
+        hidden_size=100
+        self.hidden = nn.Linear(2*encoder_size, hidden_size)
+        self.classify = nn.Sequential(
+            nn.BatchNorm1d(768),
+            nn.Dropout(p=dropout),
+            nn.Linear(in_features=768, out_features=1),
+            #nn.ReLU()
+        )
+
+    def cal_loss(self, token_tensor, label1=None):
+        # self.bert.eval()
+        # with torch.no_grad():
+        bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None)
+        pred = self.classify(bert_outputs[:,0,:])
+        loss = nn.BCEWithLogitsLoss()(pred, label1)
+        return loss
+
+    def forward(self, token_tensor):
+        batch_size = token_tensor.size()[0]
+
+        self.bert.eval()
+        with torch.no_grad():
+            bert_outputs, _ = self.bert(token_tensor, attention_mask=(token_tensor > 0).long(), token_type_ids=None)
+        pred = self.classify(bert_outputs[:,0,:])
+
+        return nn.Sigmoid()(pred)
+
+
 from allennlp.modules.span_extractors import SelfAttentiveSpanExtractor, EndpointSpanExtractor
 
 

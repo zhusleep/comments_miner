@@ -161,6 +161,64 @@ class SPO_BERT(Dataset):
             return index, sentence, length
 
 
+class SPO_BERT_nerornot(Dataset):
+    def __init__(self, X, tokenizer, label=None,  ner=None):
+        super(SPO_BERT_nerornot, self).__init__()
+        self.raw_X = X
+        self.label = label
+        self.tokenizer = tokenizer
+        self.X = self.deal_for_bert(X, self.tokenizer)
+        # X = pad_sequences(X, maxlen=198)
+        self.ner = ner
+        self.length = [len(sen) for sen in self.X]
+
+    def deal_for_bert(self,x,t):
+        # text = {}
+        # for s in x:
+        #     for word in s:
+        #         if word in text:
+        #             text[word] += 1
+        #         else:
+        #             text[word] = 1
+        # extra_token_id = 1
+        # for w in sorted(text.items(), key=lambda x: x[1])[-90:]:
+        #     self.tokenizer.vocab[w[0]] = extra_token_id
+        #     extra_token_id += 1
+
+        bert_tokens = []
+        for item in x:
+            temp = []
+            for w in item:
+                if w in self.tokenizer.vocab:
+                    temp.append(w)
+                else:
+                    temp.append('[UNK]')
+
+            #sen = t.tokenize(''.join(item))
+            indexed_tokens = t.convert_tokens_to_ids(temp)
+            bert_tokens.append(indexed_tokens)
+        return bert_tokens
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, index):
+        sentence = torch.tensor(self.X[index])
+        if self.ner is not None:
+            ner = torch.tensor(self.ner[index])
+
+        length = self.length[index]
+        # if self.ner is not None:
+        #     ner = torch.tensor(self.ner[index])
+        #if self.combined_char_t is not None:
+
+        if  self.ner is not None:
+            return index, sentence, ner, length
+        else:
+            return index, sentence, length
+
+
+
 class SPO_BERT_LINK(Dataset):
     def __init__(self, X, tokenizer, pos, type=None, max_len=510):
         super(SPO_BERT_LINK, self).__init__()
@@ -432,13 +490,13 @@ class NERLINK(Dataset):
                 else:
                     temp.append('[UNK]')
             # 在ner周围添加unused标记
-            # temp.insert(pos1[index][0]+1, '[unused1]')
-            # temp.insert(pos1[index][1]+3, '[unused2]')
-            # temp.insert(pos2[index][0]+3, '[unused3]')
-            # temp.insert(pos2[index][1]+5, '[unused4]')
+            temp.insert(pos1[index][0]+1, '[unused1]')
+            temp.insert(pos1[index][1]+3, '[unused2]')
+            temp.insert(pos2[index][0]+3, '[unused3]')
+            temp.insert(pos2[index][1]+5, '[unused4]')
             # sen = t.tokenize(''.join(item))
             # 截取中间片段
-            temp = [temp[0]]+temp[pos1[index][0]+1:pos2[index][1]+2]+[temp[-1]]
+            #temp = [temp[0]]+temp[pos1[index][0]+1:pos2[index][1]+2]+[temp[-1]]
             indexed_tokens = t.convert_tokens_to_ids(temp)
             bert_tokens.append(indexed_tokens)
         return bert_tokens
@@ -481,10 +539,9 @@ class NERLINK(Dataset):
     def __getitem__(self, index):
         sentence = torch.tensor(self.X[index])
         numerical_f = self.numerical_f(self.raw_X[index], self.pos1[index], self.pos2[index], index)
-        # pos1 = [self.pos1[index][0]+2, self.pos1[index][1]+2]
-        # pos2 = [self.pos2[index][0]+4, self.pos2[index][1]+4]
-        pos1 = [1, 1+self.pos1[index][1]-self.pos1[index][0]]
-        pos2 = [len(sentence)-2-self.pos2[index][1]+self.pos2[index][0], len(sentence)-2]
+        pos1 = [self.pos1[index][0]+2, self.pos1[index][1]+2]
+        pos2 = [self.pos2[index][0]+4, self.pos2[index][1]+4]
+
         if self.label is not None:
             label = self.label[index]
         else:
@@ -662,6 +719,20 @@ def collate_fn(batch):
         index, X, ner1,ner2,ner3,ner4,ner5, length = zip(*batch)
         length = torch.tensor(length, dtype=torch.int)
         return index, X, ner1,ner2,ner3,ner4,ner5, length,
+    else:
+        index, X, length = zip(*batch)
+        length = torch.tensor(length, dtype=torch.int)
+        return index, X, length,
+
+
+def collate_fn_nerornot(batch):
+
+    if len(batch[0]) == 4:
+        index, X, ner1, length = zip(*batch)
+        ner1 = torch.tensor(ner1)
+
+        length = torch.tensor(length, dtype=torch.int)
+        return index, X, ner1, length,
     else:
         index, X, length = zip(*batch)
         length = torch.tensor(length, dtype=torch.int)
